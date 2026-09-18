@@ -1,0 +1,27 @@
+type Business {
+  organisationId: String
+  sbi: ID!
+  info: BusinessInfo
+  countyParishHoldings: [CountyParishHolding]
+
+  """
+  A customer's relationship with this business, including their permissions.
+  """
+  customer(crn: ID!): BusinessCustomer
+}
+
+type BusinessInfo {
+  name: String
+  vat: String
+  traderNumber: String
+  vendorNumber: String
+  legalStatus: CodeType
+  type: CodeType
+  address: Address
+  email: Email
+  phone: Phone
+}
+
+type CountyParishHolding {
+  cphNumber: String
+}

@@ -1,0 +1,9 @@
+type BusinessCustomer {
+  crn: ID!
+  permissionGroups: [PermissionGroup]
+}
+
+type PermissionGroup {
+  id: String
+  level: String
+}

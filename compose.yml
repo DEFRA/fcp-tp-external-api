@@ -1,46 +1,103 @@
 services:
-  # floci is a replacement for localstack. It emulates AWS resources (sqs, sns, s3 etc) for local development
-  # See: https://floci.io for more details
-  floci:
-    image: hectorvent/floci:latest-aws
+  # Local stand-in for the real data access layer. When deployed, DAL_ENDPOINT
+  # points at the hosted fcp-dal-api instead and none of these run.
+  mongodb:
+    image: mongo:7
     ports:
-      - '4566:4566'
-    env_file:
-      - 'compose/aws.env'
-    environment:
-      FLOCI_DEFAULT_REGION: eu-west-2
-    volumes:
-      - ./compose/floci/start.d:/etc/floci/init/start.d:ro
+      - '27017:27017'
     networks:
-      - cdp-tenant
+      - fcp-tp-external-api
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
+      interval: 3s
+      timeout: 2s
+      retries: 5
 
-  redis:
-    image: redis:7.2.3-alpine3.18
+  upstream-mock:
+    image: defradigital/fcp-dal-upstream-mock
     ports:
-      - '6379:6379'
+      - '3100:3100'
+    environment:
+      MOCK_LOG_LEVEL: info
+      MOCK_SERVER_COLLECTION: all
+      NODE_ENV: development
+      PORT: 3100
     networks:
-      - cdp-tenant
+      - fcp-tp-external-api
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3100/health']
+      interval: 3s
+      timeout: 2s
+      retries: 5
+
+  fcp-dal-api:
+    image: defradigital/fcp-dal-api
+    ports:
+      - '3000:3000'
+    environment:
+      LOG_LEVEL: info
+      NODE_ENV: development
+      PORT: 3000
+      ENVIRONMENT: dev
+      DISABLE_AUTH: true
+      DISABLE_PROXY: true
+      GRAPHQL_DASHBOARD_ENABLED: true
+      ADMIN_AD_GROUP_ID: unused
+      KITS_INTERNAL_GATEWAY_URL: http://upstream-mock:3100/extapi/
+      KITS_EXTERNAL_GATEWAY_URL: http://upstream-mock:3100/extapi/
+      KITS_GATEWAY_TIMEOUT_MS: 3000
+      KITS_DISABLE_MTLS: true
+      KITS_DAL_SERVICE_ACCOUNT_EMAIL: test@example.com
+      HITACHI_BASE_URL: http://upstream-mock:3100/api/
+      HITACHI_TIMEOUT_MS: 3000
+      HITACHI_DISABLE_AUTH: true
+      DAL_REQUEST_TIMEOUT_MS: 3000
+      KIT_EXT_PERSON_ID_OVERRIDE: 3337243
+      MONGO_URI: mongodb://mongodb:27017
+      MONGO_DATABASE: 'fcp-dal-api'
+      SERVICE_VERSION: 0.0.0
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      upstream-mock:
+        condition: service_healthy
+    networks:
+      - fcp-tp-external-api
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/health']
+      interval: 3s
+      timeout: 2s
+      retries: 5
 
   ################################################################################
 
   fcp-tp-external-api:
+    profiles:
+      - app
     build:
       context: .
       target: development
     ports:
       - '3001:3001'
-    links:
-      - 'floci:floci'
+      - '9001:9229'
     depends_on:
-      floci:
+      fcp-dal-api:
         condition: service_healthy
-    env_file:
-      - 'compose/aws.env'
     environment:
       PORT: 3001
       NODE_ENV: development
+      AWS_EMF_ENVIRONMENT: Local
+      DAL_ENDPOINT: http://fcp-dal-api:3000/graphql
+      DAL_GATEWAY_TYPE: external
+      DAL_TENANT_ID: local-tenant-id
+      DAL_TOKEN_ENDPOINT: http://fcp-dal-api:3000/local-token
+      DAL_CLIENT_ID: local-client-id
+      DAL_CLIENT_SECRET: local-client-secret
+      SANITIZE_DATA: 'true'
+      SANITIZE_SECRET: local-sanitize-secret-change-me
+      GRAPHQL_INTROSPECTION_ENABLED: 'true'
     networks:
-      - cdp-tenant
+      - fcp-tp-external-api
     volumes:
       - ./src:/home/node/src
       - ./package.json:/home/node/package.json
@@ -48,6 +105,6 @@ services:
 ################################################################################
 
 networks:
-  cdp-tenant:
+  fcp-tp-external-api:
     driver: bridge
-    name: cdp-tenant
+    name: fcp-tp-external-api
