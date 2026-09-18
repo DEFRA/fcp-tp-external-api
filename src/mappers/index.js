@@ -1,29 +1,31 @@
 import { sanitize } from '../sanitizer/index.js'
 
+const ADDRESS_FIELDS = [
+  'pafOrganisationName',
+  'buildingNumberRange',
+  'buildingName',
+  'flatName',
+  'street',
+  'city',
+  'county',
+  'postalCode',
+  'country',
+  'dependentLocality',
+  'doubleDependentLocality',
+  'line1',
+  'line2',
+  'line3',
+  'line4',
+  'line5',
+  'uprn'
+]
+
 function mapAddress (address) {
   if (!address) {
     return null
   }
 
-  return {
-    pafOrganisationName: address.pafOrganisationName ?? null,
-    buildingNumberRange: address.buildingNumberRange ?? null,
-    buildingName: address.buildingName ?? null,
-    flatName: address.flatName ?? null,
-    street: address.street ?? null,
-    city: address.city ?? null,
-    county: address.county ?? null,
-    postalCode: address.postalCode ?? null,
-    country: address.country ?? null,
-    dependentLocality: address.dependentLocality ?? null,
-    doubleDependentLocality: address.doubleDependentLocality ?? null,
-    line1: address.line1 ?? null,
-    line2: address.line2 ?? null,
-    line3: address.line3 ?? null,
-    line4: address.line4 ?? null,
-    line5: address.line5 ?? null,
-    uprn: address.uprn ?? null
-  }
+  return Object.fromEntries(ADDRESS_FIELDS.map((field) => [field, address[field] ?? null]))
 }
 
 function mapEmail (email) {

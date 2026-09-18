@@ -60,6 +60,16 @@ describe('retry', () => {
     expect(delays).toEqual([1000, 2000, 4000])
   })
 
+  test('uses a constant delay when exponential backoff is disabled', async () => {
+    const fn = vi.fn().mockRejectedValue(new Error('nope'))
+    const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout')
+
+    await settle(expect(retry(fn, 3, 500, false)).rejects.toThrow('nope'))
+
+    const delays = setTimeoutSpy.mock.calls.map(([, delay]) => delay)
+    expect(delays).toEqual([500, 500, 500])
+  })
+
   test('drops the cached token when the call is rejected as unauthorised', async () => {
     const fn = vi.fn().mockRejectedValueOnce(unauthorised()).mockResolvedValue('a token')
 

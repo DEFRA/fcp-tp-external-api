@@ -42,7 +42,8 @@ describe('generate', () => {
     ['postcode', /^[A-Z]{2}\d+ \d[A-Z]{2}$/],
     ['dateOfBirth', /^\d{4}-\d{2}-\d{2}$/],
     ['addressLine', /^\d+ \w/],
-    ['email', /^[a-z]+\.[a-z]+@[a-z.]+$/]
+    ['email', /^[a-z]+\.[a-z]+@[a-z.]+$/],
+    ['fullName', /^[A-Za-z]+ [A-Za-z]+$/]
   ])('generates a plausible %s', (kind, pattern) => {
     expect(generate(kind, seed)).toMatch(pattern)
   })

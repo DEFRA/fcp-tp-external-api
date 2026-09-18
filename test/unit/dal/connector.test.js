@@ -89,4 +89,13 @@ describe('queryDal', () => {
       extensions: { code: 'NOT_FOUND' }
     })
   })
+
+  test('falls back to a generic error code when the DAL error has none', async () => {
+    fetch.mockResolvedValue(jsonResponse({ errors: [{ message: 'Something went wrong' }] }))
+
+    await expect(queryDal('query {}', {})).rejects.toMatchObject({
+      message: 'Something went wrong',
+      extensions: { code: 'DAL_ERROR' }
+    })
+  })
 })

@@ -144,6 +144,19 @@ describe('sanitizeWith', () => {
     expect(sanitizeWith(node, 'NotAType', SECRET)).toEqual(node)
   })
 
+  test('passes through null and undefined nodes without recursing', () => {
+    expect(sanitizeWith(null, 'Business', SECRET)).toBeNull()
+    expect(sanitizeWith(undefined, 'Business', SECRET)).toBeUndefined()
+  })
+
+  test('sanitizes every item when given an array of nodes', () => {
+    const result = sanitizeWith([BUSINESS, BUSINESS], 'Business', SECRET)
+
+    expect(result).toHaveLength(2)
+    expect(result[0].info.name).not.toBe(BUSINESS.info.name)
+    expect(result[1].info.name).toBe(result[0].info.name)
+  })
+
   test('throws when no secret is configured', () => {
     expect(() => sanitizeWith(BUSINESS, 'Business', null)).toThrow(/SANITIZE_SECRET/)
   })
