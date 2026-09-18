@@ -162,6 +162,12 @@ export const config = convict({
       default: null,
       env: 'DAL_CLIENT_SECRET',
       sensitive: true
+    },
+    disableAuth: {
+      doc: 'Skip fetching an Entra token and send a placeholder bearer token instead. Only for local development, where the DAL runs with DISABLE_AUTH=true',
+      format: Boolean,
+      default: false,
+      env: 'DAL_DISABLE_AUTH'
     }
   },
   sanitize: {

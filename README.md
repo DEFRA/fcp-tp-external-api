@@ -258,8 +258,9 @@ In deployed environments the client secret is supplied through CDP secrets, neve
 Client secrets expire. A federated credential (workload identity) would remove that maintenance
 burden and is the intended direction, but a client secret is used for now.
 
-Locally none of this matters: the DAL container runs with `DISABLE_AUTH=true`, so the placeholder
-values in `.env.example` are enough.
+Locally none of this matters: the DAL container runs with `DISABLE_AUTH=true` and does not check
+our token at all, so set `DAL_DISABLE_AUTH=true` (the `.env.example` default) to skip fetching one
+from Entra entirely. A placeholder bearer token is sent instead.
 
 ## Local development
 
@@ -300,8 +301,8 @@ npm run services:down   # Stop the dependency containers
 | `fcp-tp-external-api` | 3001 | This service. Only under the `app` profile |
 
 Published images are used for the DAL and its mock, so nothing needs building or cloning. The DAL
-runs with `DISABLE_AUTH=true` and `DISABLE_PROXY=true`, which is why placeholder Entra credentials
-work locally.
+runs with `DISABLE_AUTH=true` and `DISABLE_PROXY=true`, and this service runs with
+`DAL_DISABLE_AUTH=true`, so no real Entra credentials are needed locally.
 
 To run this service in Docker too, rather than host-native:
 

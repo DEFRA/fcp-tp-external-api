@@ -81,4 +81,18 @@ describe('getToken', () => {
     expect(await getToken()).toBe('Bearer an-access-token')
     expect(wreckPost).toHaveBeenCalledTimes(2)
   })
+
+  test('bypasses Entra entirely when DAL_DISABLE_AUTH is enabled', async () => {
+    vi.resetModules()
+    vi.stubEnv('DAL_DISABLE_AUTH', 'true')
+
+    const { getToken: getTokenWithAuthDisabled } = await import('../../../../../src/services/dal/token/get-token-service.js')
+
+    expect(await getTokenWithAuthDisabled()).toBe('Bearer local-development-token')
+    expect(wreckPost).not.toHaveBeenCalled()
+    expect(cacheGet).not.toHaveBeenCalled()
+
+    vi.unstubAllEnvs()
+    vi.resetModules()
+  })
 })

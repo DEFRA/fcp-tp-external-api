@@ -8,6 +8,7 @@ import { DAL_TOKEN_CACHE_KEY, TOKEN_EXPIRY_BUFFER_MS } from './constants.js'
 const logger = createLogger()
 
 const millisecondsPerSecond = 1000
+const placeholderToken = 'Bearer local-development-token'
 
 async function requestNewToken () {
   const { clientId, clientSecret, tokenEndpoint } = config.get('dal')
@@ -32,6 +33,10 @@ async function requestNewToken () {
 }
 
 async function getCachedOrNewToken () {
+  if (config.get('dal.disableAuth')) {
+    return placeholderToken
+  }
+
   const cachedToken = await get(DAL_TOKEN_CACHE_KEY)
 
   if (cachedToken) {
