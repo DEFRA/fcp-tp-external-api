@@ -20,21 +20,21 @@ import {
 // characters (2 bytes) from a given offset, so generators use different offsets
 // to keep the parts of a composite value uncorrelated.
 function pickFromList (list, seedHex, offset) {
-  const byte1 = parseInt(seedHex.substring(offset, offset + 2), 16)
-  const byte2 = parseInt(seedHex.substring(offset + 2, offset + 4), 16)
+  const byte1 = Number.parseInt(seedHex.substring(offset, offset + 2), 16)
+  const byte2 = Number.parseInt(seedHex.substring(offset + 2, offset + 4), 16)
   return list[(((byte1 << 8) | byte2) % list.length)]
 }
 
 function generateNumber (seedHex, offset, min, max) {
-  const byte1 = parseInt(seedHex.substring(offset, offset + 2), 16)
-  const byte2 = parseInt(seedHex.substring(offset + 2, offset + 4), 16)
+  const byte1 = Number.parseInt(seedHex.substring(offset, offset + 2), 16)
+  const byte2 = Number.parseInt(seedHex.substring(offset + 2, offset + 4), 16)
   return min + (((byte1 << 8) | byte2) % (max - min + 1))
 }
 
 function generateDigits (seedHex, offset, length) {
   let digits = ''
   for (let i = 0; i < length; i++) {
-    const byte = parseInt(seedHex.substring(offset + (i * 2), offset + (i * 2) + 2), 16)
+    const byte = Number.parseInt(seedHex.substring(offset + (i * 2), offset + (i * 2) + 2), 16)
     digits += String(byte % 10)
   }
   return digits
@@ -70,8 +70,8 @@ const generators = {
     const area = pickFromList(POSTCODE_AREAS, seedHex, 0)
     const district = generateNumber(seedHex, 4, 1, 18)
     const sector = generateNumber(seedHex, 8, 0, 9)
-    const letter1 = String.fromCharCode(65 + (parseInt(seedHex.substring(12, 14), 16) % 26))
-    const letter2 = String.fromCharCode(65 + (parseInt(seedHex.substring(14, 16), 16) % 26))
+    const letter1 = String.fromCodePoint(65 + (Number.parseInt(seedHex.substring(12, 14), 16) % 26))
+    const letter2 = String.fromCodePoint(65 + (Number.parseInt(seedHex.substring(14, 16), 16) % 26))
     return `${area}${district} ${sector}${letter1}${letter2}`
   },
 

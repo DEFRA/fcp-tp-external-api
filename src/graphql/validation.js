@@ -1,7 +1,7 @@
 import { GraphQLError } from 'graphql'
 
-const SBI_PATTERN = /^[1-9][0-9]{8}$/
-const CRN_PATTERN = /^[1-9][0-9]{9}$/
+const SBI_PATTERN = /^[1-9]\d{8}$/
+const CRN_PATTERN = /^[1-9]\d{9}$/
 
 function assertMatches (value, pattern, name) {
   if (!pattern.test(String(value))) {
