@@ -13,7 +13,7 @@ function substituteFields (result, rule, typeName, secret) {
   }
 }
 
-function sanitizeChildren (result, rule, typeName, secret, rules) {
+function sanitizeChildren (result, rule, secret, rules) {
   for (const [field, childType] of Object.entries(rule.children ?? {})) {
     if (result[field] === null || result[field] === undefined) {
       continue
@@ -40,7 +40,7 @@ function sanitizeNode (node, typeName, secret, rules) {
   const result = { ...node }
 
   substituteFields(result, rule, typeName, secret)
-  sanitizeChildren(result, rule, typeName, secret, rules)
+  sanitizeChildren(result, rule, secret, rules)
 
   return result
 }
