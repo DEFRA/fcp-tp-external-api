@@ -1,6 +1,9 @@
 .DS_Store
 .npm/
-.vscode
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/settings.json
 .idea
 .server
 node_modules
@@ -8,4 +11,6 @@ npm-debug.log
 coverage
 .cache
 .eslintcache
+.envrc
 .env
+.sonarlint/

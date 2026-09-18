@@ -1,0 +1,18 @@
+type Customer {
+  crn: ID!
+  info: CustomerInfo
+}
+
+type CustomerInfo {
+  name: CustomerName
+  dateOfBirth: String
+  address: Address
+  email: Email
+  phone: Phone
+}
+
+type CustomerName {
+  first: String
+  middle: String
+  last: String
+}

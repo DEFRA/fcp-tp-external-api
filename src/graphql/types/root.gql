@@ -1,0 +1,11 @@
+type Query {
+  """
+  A business identified by its Single Business Identifier.
+  """
+  business(sbi: ID!): Business
+
+  """
+  A customer identified by their Customer Reference Number.
+  """
+  customer(crn: ID!): Customer
+}

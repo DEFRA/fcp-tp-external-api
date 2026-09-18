@@ -80,12 +80,110 @@ export const config = convict({
     default: null,
     env: 'HTTP_PROXY'
   },
+  isDevelopment: {
+    doc: 'Is the service running in development mode',
+    format: Boolean,
+    default: !isProduction
+  },
+  isSecureContextEnabled: {
+    doc: 'Enable custom secure context',
+    format: Boolean,
+    default: isProduction,
+    env: 'ENABLE_SECURE_CONTEXT'
+  },
+  isMetricsEnabled: {
+    doc: 'Enable metrics reporting',
+    format: Boolean,
+    default: isProduction,
+    env: 'ENABLE_METRICS'
+  },
   tracing: {
     header: {
       doc: 'CDP tracing header name',
       format: String,
       default: 'x-cdp-request-id',
       env: 'TRACING_HEADER'
+    }
+  },
+  graphql: {
+    path: {
+      doc: 'Path the GraphQL endpoint is served from',
+      format: String,
+      default: '/graphql',
+      env: 'GRAPHQL_PATH'
+    },
+    isIntrospectionEnabled: {
+      doc: 'Allow clients to introspect the schema',
+      format: Boolean,
+      default: !isProduction,
+      env: 'GRAPHQL_INTROSPECTION_ENABLED'
+    }
+  },
+  dal: {
+    endpoint: {
+      doc: 'GraphQL endpoint of the data access layer (DAL)',
+      format: String,
+      default: null,
+      env: 'DAL_ENDPOINT'
+    },
+    gatewayType: {
+      doc: 'Which DAL gateway to route requests through',
+      format: ['external', 'internal'],
+      default: 'external',
+      env: 'DAL_GATEWAY_TYPE'
+    },
+    requestTimeoutMs: {
+      doc: 'Timeout applied to outbound DAL requests',
+      format: 'nat',
+      default: 15000,
+      env: 'DAL_REQUEST_TIMEOUT_MS'
+    },
+    tenantId: {
+      doc: 'Unique ID of the Entra tenant issuing our machine-to-machine token',
+      format: String,
+      default: null,
+      env: 'DAL_TENANT_ID'
+    },
+    tokenEndpoint: {
+      doc: 'Entra token endpoint used to obtain a machine-to-machine token',
+      format: String,
+      default: null,
+      env: 'DAL_TOKEN_ENDPOINT'
+    },
+    clientId: {
+      doc: 'Entra client ID of this service',
+      format: String,
+      default: null,
+      env: 'DAL_CLIENT_ID'
+    },
+    clientSecret: {
+      doc: 'Entra client secret of this service',
+      format: String,
+      default: null,
+      env: 'DAL_CLIENT_SECRET',
+      sensitive: true
+    },
+    disableAuth: {
+      doc: 'Skip fetching an Entra token and send a placeholder bearer token instead. Only for local development, where the DAL runs with DISABLE_AUTH=true',
+      format: Boolean,
+      default: false,
+      env: 'DAL_DISABLE_AUTH'
+    }
+  },
+  sanitize: {
+    isEnabled: {
+      doc: 'Substitute business and personal data with fake values before responding',
+      format: Boolean,
+      default: true,
+      env: 'SANITIZE_DATA'
+    },
+    secret: {
+      doc: 'Secret keying the HMAC that makes substituted values deterministic',
+      format: String,
+      nullable: true,
+      default: null,
+      env: 'SANITIZE_SECRET',
+      sensitive: true
     }
   }
 })
