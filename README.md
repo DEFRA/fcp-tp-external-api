@@ -213,12 +213,12 @@ gets two different substitutions, which stops anyone inferring which fields orig
 
 Which fields are substituted is declared per type in `src/sanitizer/rules.js`.
 
-**Substituted:** business name, VAT number, all address fields (including UPRN), email addresses,
-phone numbers, customer names, and date of birth.
+**Substituted:** VAT number, all address fields (including UPRN), email addresses, phone numbers,
+customer names, and date of birth.
 
 **Preserved:** identifiers and reference data, because they are what make the response usable.
-That means SBI, CRN, organisation ID, trader number, vendor number, CPH number, permission group
-IDs and levels, and legal status and business type codes.
+That means SBI, CRN, organisation ID, business name, trader number, vendor number, CPH number,
+permission group IDs and levels, and legal status and business type codes.
 
 A field with no rule is left untouched. A field whose rule names a generator that does not exist
 becomes `[REDACTED]` rather than leaking the original, so a mistake in the rules fails safe.

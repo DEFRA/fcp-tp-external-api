@@ -19,18 +19,6 @@ export const LAST_NAMES = [
   'Bailey', 'Shaw', 'Murray'
 ]
 
-export const BUSINESS_PREFIXES = [
-  'Ashfield', 'Brambleton', 'Clearwater', 'Downsview', 'Elmcroft',
-  'Fallowfield', 'Grangemoor', 'Hartwell', 'Ivybridge', 'Juniper',
-  'Kingsmead', 'Longacre', 'Marshgate', 'Northbourne', 'Oakhurst',
-  'Pennyfield', 'Quarryhill', 'Redstone', 'Stonebridge', 'Thornbury'
-]
-
-export const BUSINESS_SUFFIXES = [
-  'Farms', 'Farming Ltd', 'Estates', 'Agriculture Ltd', 'Holdings',
-  'Partnership', 'Land Company', 'Growers', 'Livestock Ltd', 'Rural Ltd'
-]
-
 export const BUILDING_NAMES = [
   'The Barn', 'Rose Cottage', 'Mill House', 'The Granary', 'Old Dairy',
   'Hill Farm', 'Brook House', 'The Stables', 'Yew Tree House', 'Fern Cottage',

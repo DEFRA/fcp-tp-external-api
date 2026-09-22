@@ -11,7 +11,6 @@ export const sanitizeRules = {
   },
   BusinessInfo: {
     fields: {
-      name: 'businessName',
       vat: 'vat'
     },
     children: {

@@ -11,7 +11,7 @@ describe('sanitize', () => {
     }))
 
     const { sanitize } = await import('../../../src/sanitizer/index.js')
-    const node = { info: { name: 'Henderson Family Farms' } }
+    const node = { info: { vat: 'GB123456789' } }
 
     expect(sanitize(node, 'Business')).toBe(node)
   })
@@ -32,8 +32,8 @@ describe('sanitize', () => {
     }))
 
     const { sanitize } = await import('../../../src/sanitizer/index.js')
-    const result = sanitize({ info: { name: 'Henderson Family Farms' } }, 'Business')
+    const result = sanitize({ info: { vat: 'GB123456789' } }, 'Business')
 
-    expect(result.info.name).not.toBe('Henderson Family Farms')
+    expect(result.info.vat).not.toBe('GB123456789')
   })
 })

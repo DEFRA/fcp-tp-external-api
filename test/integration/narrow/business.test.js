@@ -77,19 +77,19 @@ describe('business query', () => {
     const response = await graphqlRequest(server, BUSINESS_QUERY, { sbi: '107183280' })
     const { info } = JSON.parse(response.payload).data.business
 
-    expect(info.name).not.toBe(dalResponses.business.info.name)
     expect(info.vat).not.toBe(dalResponses.business.info.vat)
     expect(info.address.postalCode).not.toBe(dalResponses.business.info.address.postalCode)
     expect(info.email.address).not.toBe(dalResponses.business.info.email.address)
     expect(info.phone.mobile).not.toBe(dalResponses.business.info.phone.mobile)
   })
 
-  test('leaves identifiers intact so the data stays joinable', async () => {
+  test('leaves identifiers and business name intact so the data stays joinable', async () => {
     mockDal({ business: dalResponses.business })
 
     const response = await graphqlRequest(server, BUSINESS_QUERY, { sbi: '107183280' })
     const { info } = JSON.parse(response.payload).data.business
 
+    expect(info.name).toBe(dalResponses.business.info.name)
     expect(info.traderNumber).toBe(dalResponses.business.info.traderNumber)
     expect(info.vendorNumber).toBe(dalResponses.business.info.vendorNumber)
     expect(info.legalStatus).toEqual(dalResponses.business.info.legalStatus)
