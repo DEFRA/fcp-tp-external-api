@@ -33,9 +33,6 @@ services:
   fcp-dal-api:
     image: defradigital/fcp-dal-api
     ports:
-      # Published as 3005 on the host: 3000 is already used by fcp-land-app-stub's
-      # own app port. Container-to-container traffic still uses port 3000 - see
-      # DAL_ENDPOINT below - so this only affects host-native access.
       - '3005:3000'
     environment:
       LOG_LEVEL: info
