@@ -33,7 +33,7 @@ services:
   fcp-dal-api:
     image: defradigital/fcp-dal-api
     ports:
-      - '3000:3000'
+      - '3005:3000'
     environment:
       LOG_LEVEL: info
       NODE_ENV: development
