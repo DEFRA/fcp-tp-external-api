@@ -295,7 +295,7 @@ npm run services:down   # Stop the dependency containers
 
 | Service | Port | Purpose |
 | --- | --- | --- |
-| `fcp-dal-api` | 3000 | The DAL this service calls |
+| `fcp-dal-api` | 3005 (3000 in-container) | The DAL this service calls |
 | `upstream-mock` | 3100 | Stubs the KITS and Hitachi services the DAL calls |
 | `mongodb` | 27017 | The DAL's database |
 | `fcp-tp-external-api` | 3001 | This service. Only under the `app` profile |
