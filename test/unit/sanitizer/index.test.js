@@ -53,7 +53,6 @@ describe('sanitizeWith', () => {
   test('replaces every business data field', () => {
     const result = sanitizeWith(BUSINESS, 'Business', SECRET)
 
-    expect(result.info.name).not.toBe(BUSINESS.info.name)
     expect(result.info.vat).not.toBe(BUSINESS.info.vat)
     expect(result.info.email.address).not.toBe(BUSINESS.info.email.address)
     expect(result.info.phone.mobile).not.toBe(BUSINESS.info.phone.mobile)
@@ -79,6 +78,7 @@ describe('sanitizeWith', () => {
 
     expect(result.sbi).toBe(BUSINESS.sbi)
     expect(result.organisationId).toBe(BUSINESS.organisationId)
+    expect(result.info.name).toBe(BUSINESS.info.name)
     expect(result.info.traderNumber).toBe(BUSINESS.info.traderNumber)
     expect(result.info.vendorNumber).toBe(BUSINESS.info.vendorNumber)
     expect(result.info.legalStatus).toEqual(BUSINESS.info.legalStatus)
@@ -110,7 +110,7 @@ describe('sanitizeWith', () => {
     const a = sanitizeWith(BUSINESS, 'Business', 'secret-a')
     const b = sanitizeWith(BUSINESS, 'Business', 'secret-b')
 
-    expect(a.info.name).not.toBe(b.info.name)
+    expect(a.info.vat).not.toBe(b.info.vat)
   })
 
   test('gives the same value in two fields different substitutions', () => {
@@ -153,8 +153,8 @@ describe('sanitizeWith', () => {
     const result = sanitizeWith([BUSINESS, BUSINESS], 'Business', SECRET)
 
     expect(result).toHaveLength(2)
-    expect(result[0].info.name).not.toBe(BUSINESS.info.name)
-    expect(result[1].info.name).toBe(result[0].info.name)
+    expect(result[0].info.vat).not.toBe(BUSINESS.info.vat)
+    expect(result[1].info.vat).toBe(result[0].info.vat)
   })
 
   test('throws when no secret is configured', () => {

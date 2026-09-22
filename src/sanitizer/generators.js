@@ -2,8 +2,6 @@ import {
   FIRST_NAMES,
   MIDDLE_NAMES,
   LAST_NAMES,
-  BUSINESS_PREFIXES,
-  BUSINESS_SUFFIXES,
   BUILDING_NAMES,
   FLAT_NAMES,
   STREETS,
@@ -47,9 +45,6 @@ const generators = {
 
   fullName: (seedHex) =>
     `${pickFromList(FIRST_NAMES, seedHex, 0)} ${pickFromList(LAST_NAMES, seedHex, 4)}`,
-
-  businessName: (seedHex) =>
-    `${pickFromList(BUSINESS_PREFIXES, seedHex, 0)} ${pickFromList(BUSINESS_SUFFIXES, seedHex, 4)}`,
 
   organisationName: (seedHex) => pickFromList(ORGANISATION_NAMES, seedHex, 0),
   buildingName: (seedHex) => pickFromList(BUILDING_NAMES, seedHex, 0),

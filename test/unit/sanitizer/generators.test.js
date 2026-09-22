@@ -31,7 +31,7 @@ describe('generate', () => {
   })
 
   test('is deterministic for a given seed', () => {
-    expect(generate('businessName', seed)).toBe(generate('businessName', seed))
+    expect(generate('vat', seed)).toBe(generate('vat', seed))
   })
 
   test.each([
