@@ -25,3 +25,41 @@ type BusinessInfo {
 type CountyParishHolding {
   cphNumber: String
 }
+
+extend type Mutation {
+  """
+  Updates any combination of business details in a single request. All fields
+  are optional except sbi, so callers need only provide the fields they want
+  to change.
+  """
+  updateBusinessAllFields(input: UpdateBusinessAllFieldsInput!): UpdateBusinessAllFieldsResponse
+}
+
+input UpdateBusinessAllFieldsInput {
+  sbi: ID!
+  name: String
+  email: EmailInput
+  correspondenceEmail: EmailInput
+  phone: PhoneInput
+  correspondencePhone: PhoneInput
+  address: ValidAddressInput
+  correspondenceAddress: ValidAddressInput
+  isCorrespondenceAsBusinessAddress: Boolean
+  vat: String
+  legalStatusCode: Int
+  typeCode: Int
+  dateStartedFarming: String
+  registrationNumbers: BusinessRegistrationNumbersInput
+}
+
+input BusinessRegistrationNumbersInput {
+  charityCommission: String
+  companiesHouse: String
+}
+
+type UpdateBusinessAllFieldsResponse {
+  success: Boolean
+  businessDetailsUpdated: Boolean
+  additionalBusinessDetailsUpdated: Boolean
+  business: Business
+}

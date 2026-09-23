@@ -9,3 +9,12 @@ type Query {
   """
   customer(crn: ID!): Customer
 }
+
+"""
+Domain-specific mutation fields are added via "extend type Mutation" in
+business.gql and customer.gql - this stub field exists only so the base type
+has something to extend.
+"""
+type Mutation {
+  _empty: Boolean
+}
