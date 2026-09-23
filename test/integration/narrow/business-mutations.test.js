@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll, afterAll, afterEach, vi } from 'vitest'
-import { dalResponses, mockDal, graphqlRequest } from './helpers.js'
+import { mockDal, graphqlRequest } from './helpers.js'
 import { createServer } from '../../../src/server.js'
 import { stop as stopApolloServer } from '../../../src/graphql/server.js'
 
@@ -11,9 +11,6 @@ const UPDATE_BUSINESS_MUTATION = `
   mutation UpdateBusinessAllFields($input: UpdateBusinessAllFieldsInput!) {
     updateBusinessAllFields(input: $input) {
       success
-      business {
-        sbi
-      }
     }
   }
 `
@@ -37,7 +34,7 @@ afterEach(() => {
 describe('updateBusinessAllFields mutation', () => {
   test('sends the input straight through to the DAL and returns its response', async () => {
     const fetchMock = mockDal({
-      updateBusinessAllFields: { success: true, business: { sbi: dalResponses.business.sbi } }
+      updateBusinessAllFields: { success: true }
     })
 
     const input = { sbi: '107183280', name: 'Henderson Family Farms', vat: '123456789' }
@@ -46,7 +43,7 @@ describe('updateBusinessAllFields mutation', () => {
 
     expect(response.statusCode).toBe(200)
     expect(errors).toBeUndefined()
-    expect(data.updateBusinessAllFields).toEqual({ success: true, business: { sbi: '107183280' } })
+    expect(data.updateBusinessAllFields).toEqual({ success: true })
 
     const [, requestOptions] = fetchMock.mock.calls[0]
     expect(JSON.parse(requestOptions.body).variables).toEqual({ input })

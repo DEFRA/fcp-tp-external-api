@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll, afterAll, afterEach, vi } from 'vitest'
-import { dalResponses, mockDal, graphqlRequest } from './helpers.js'
+import { mockDal, graphqlRequest } from './helpers.js'
 import { createServer } from '../../../src/server.js'
 import { stop as stopApolloServer } from '../../../src/graphql/server.js'
 
@@ -11,9 +11,6 @@ const UPDATE_CUSTOMER_MUTATION = `
   mutation UpdateCustomerAllFields($input: UpdateCustomerAllFieldsInput!) {
     updateCustomerAllFields(input: $input) {
       success
-      customer {
-        crn
-      }
     }
   }
 `
@@ -37,7 +34,7 @@ afterEach(() => {
 describe('updateCustomerAllFields mutation', () => {
   test('sends the input straight through to the DAL and returns its response', async () => {
     const fetchMock = mockDal({
-      updateCustomerAllFields: { success: true, customer: { crn: dalResponses.customer.crn } }
+      updateCustomerAllFields: { success: true }
     })
 
     const input = { crn: '1102634220', first: 'James', last: 'Henderson' }
@@ -46,7 +43,7 @@ describe('updateCustomerAllFields mutation', () => {
 
     expect(response.statusCode).toBe(200)
     expect(errors).toBeUndefined()
-    expect(data.updateCustomerAllFields).toEqual({ success: true, customer: { crn: '1102634220' } })
+    expect(data.updateCustomerAllFields).toEqual({ success: true })
 
     const [, requestOptions] = fetchMock.mock.calls[0]
     expect(JSON.parse(requestOptions.body).variables).toEqual({ input })
