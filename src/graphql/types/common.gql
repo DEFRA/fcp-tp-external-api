@@ -31,3 +31,85 @@ type CodeType {
   code: String
   type: String
 }
+
+input EmailInput {
+  address: String!
+}
+
+input PhoneInput {
+  mobile: String
+  landline: String
+}
+
+"""
+A flat address input, used where the DAL does not distinguish between a
+postcode-lookup address and a manually entered one (e.g. customer addresses).
+"""
+input AddressInput {
+  pafOrganisationName: String
+  buildingNumberRange: String
+  buildingName: String
+  flatName: String
+  street: String
+  city: String
+  county: String
+  postalCode: String
+  country: String
+  dependentLocality: String
+  doubleDependentLocality: String
+  line1: String
+  line2: String
+  line3: String
+  line4: String
+  line5: String
+  uprn: String
+}
+
+input AddressInputWithUprn {
+  pafOrganisationName: String
+  buildingNumberRange: String
+  buildingName: String
+  flatName: String
+  street: String
+  city: String
+  county: String
+  postalCode: String
+  country: String
+  dependentLocality: String
+  doubleDependentLocality: String
+  line1: String
+  line2: String
+  line3: String
+  line4: String
+  line5: String
+  uprn: String!
+}
+
+input AddressInputWithoutUprn {
+  pafOrganisationName: String
+  buildingNumberRange: String
+  buildingName: String
+  flatName: String
+  street: String
+  city: String!
+  county: String
+  postalCode: String!
+  country: String!
+  dependentLocality: String
+  doubleDependentLocality: String
+  line1: String!
+  line2: String
+  line3: String
+  line4: String
+  line5: String
+  uprn: String
+}
+
+"""
+An address that is either identified by a UPRN (postcode lookup) or entered
+manually - exactly one of the two fields must be provided.
+"""
+input ValidAddressInput @oneOf {
+  withUprn: AddressInputWithUprn
+  withoutUprn: AddressInputWithoutUprn
+}

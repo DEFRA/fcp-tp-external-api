@@ -6,6 +6,10 @@ export const resolvers = {
     ...businessResolvers.Query,
     ...customerResolvers.Query
   },
+  Mutation: {
+    ...businessResolvers.Mutation,
+    ...customerResolvers.Mutation
+  },
   Business: {
     ...businessResolvers.Business
   }

@@ -16,3 +16,30 @@ type CustomerName {
   middle: String
   last: String
 }
+
+extend type Mutation {
+  """
+  Updates any combination of a customer's personal details in a single
+  request. All fields are optional except crn.
+  """
+  updateCustomerAllFields(input: UpdateCustomerAllFieldsInput!): UpdateCustomerResponse
+}
+
+input UpdateCustomerAllFieldsInput {
+  crn: ID!
+  first: String
+  last: String
+  middle: String
+  otherTitle: String
+  title: String
+  address: AddressInput
+  dateOfBirth: String
+  email: EmailInput
+  phone: PhoneInput
+  doNotContact: Boolean
+}
+
+type UpdateCustomerResponse {
+  success: Boolean
+  customer: Customer
+}
