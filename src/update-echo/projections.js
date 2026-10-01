@@ -22,7 +22,7 @@ const ADDRESS_FIELDS = [
 ]
 
 function present (object, key) {
-  return object !== null && object !== undefined && Object.prototype.hasOwnProperty.call(object, key)
+  return object !== null && object !== undefined && Object.hasOwn(object, key)
 }
 
 function projectEmail (email) {
