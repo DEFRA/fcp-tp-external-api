@@ -22,7 +22,7 @@ describe('getBusiness', () => {
     queryDal.mockResolvedValue({
       business: { organisationId: '5565448', sbi: '107183280', info: { vat: 'FAKE1' } }
     })
-    applyRecentUpdate.mockResolvedValue({ sbi: '107183280', info: { vat: 'GB123456789' } })
+    applyRecentUpdate.mockResolvedValue({ sbi: '107183280', info: { vat: '123456789' } })
 
     const result = await getBusiness('107183280')
 
@@ -31,7 +31,7 @@ describe('getBusiness', () => {
       '107183280',
       expect.objectContaining({ sbi: '107183280' })
     )
-    expect(result).toEqual({ sbi: '107183280', info: { vat: 'GB123456789' } })
+    expect(result).toEqual({ sbi: '107183280', info: { vat: '123456789' } })
   })
 
   test('forwards the sbi and caller token to the DAL', async () => {

@@ -81,7 +81,8 @@ const generators = {
   mobile: (seedHex) => `07${generateDigits(seedHex, 0, 9)}`,
   landline: (seedHex) => `01${generateDigits(seedHex, 0, 9)}`,
 
-  vat: (seedHex) => `GB${generateDigits(seedHex, 0, 9)}`,
+  // Stored and validated downstream as a bare 9 digit number, no "GB" prefix.
+  vat: (seedHex) => generateDigits(seedHex, 0, 9),
 
   dateOfBirth: (seedHex) => {
     const year = generateNumber(seedHex, 0, 1940, 2000)

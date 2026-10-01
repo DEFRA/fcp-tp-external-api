@@ -9,14 +9,14 @@ describe('projectBusinessUpdate', () => {
   test('projects vat, email and phone as submitted', () => {
     const input = {
       sbi: '107183280',
-      vat: 'GB123456789',
+      vat: '123456789',
       email: { address: 'new@example.com' },
       phone: { mobile: '07700900000', landline: '01144960123' }
     }
 
     expect(projectBusinessUpdate(input)).toEqual({
       info: {
-        vat: 'GB123456789',
+        vat: '123456789',
         email: { address: 'new@example.com' },
         phone: { mobile: '07700900000', landline: '01144960123' }
       }
