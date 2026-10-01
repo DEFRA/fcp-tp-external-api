@@ -1,9 +1,14 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest'
 
 const queryDal = vi.fn()
+const rememberUpdate = vi.fn()
 
 vi.mock('../../../../src/dal/connector.js', () => ({
   queryDal: (...args) => queryDal(...args)
+}))
+
+vi.mock('../../../../src/update-echo/index.js', () => ({
+  rememberUpdate: (...args) => rememberUpdate(...args)
 }))
 
 const { updateCustomer } = await import('../../../../src/services/customer/update-customer-service.js')
@@ -11,6 +16,7 @@ const { updateCustomer } = await import('../../../../src/services/customer/updat
 describe('updateCustomer', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    rememberUpdate.mockResolvedValue(undefined)
   })
 
   test('returns the DAL mutation result', async () => {
@@ -40,5 +46,22 @@ describe('updateCustomer', () => {
       { input },
       { forwardedUserToken: 'Bearer a-token' }
     )
+  })
+
+  test('remembers a successful update for the echo cache', async () => {
+    queryDal.mockResolvedValue({ updateCustomerAllFields: { success: true } })
+
+    const input = { crn: '1102634220', first: 'James' }
+    await updateCustomer(input)
+
+    expect(rememberUpdate).toHaveBeenCalledWith('Customer', '1102634220', { info: { name: { first: 'James' } } })
+  })
+
+  test('does not remember an unsuccessful update', async () => {
+    queryDal.mockResolvedValue({ updateCustomerAllFields: { success: false } })
+
+    await updateCustomer({ crn: '1102634220', first: 'James' })
+
+    expect(rememberUpdate).not.toHaveBeenCalled()
   })
 })

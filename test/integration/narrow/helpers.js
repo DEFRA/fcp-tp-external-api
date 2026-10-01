@@ -6,7 +6,7 @@ export const dalResponses = {
     sbi: '107183280',
     info: {
       name: 'Henderson Family Farms',
-      vat: 'GB123456789',
+      vat: '123456789',
       traderNumber: '010203040506',
       vendorNumber: '694523',
       legalStatus: { code: '102111', type: 'Sole Proprietorship' },

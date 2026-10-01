@@ -185,6 +185,26 @@ export const config = convict({
       env: 'SANITIZE_SECRET',
       sensitive: true
     }
+  },
+  updateEcho: {
+    isEnabled: {
+      doc: 'Echo a caller\'s own recent updates back to them instead of a freshly sanitized value',
+      format: Boolean,
+      default: true,
+      env: 'UPDATE_ECHO_ENABLED'
+    },
+    ttlMs: {
+      doc: 'How long an echoed update is remembered for',
+      format: 'nat',
+      default: 15 * 60 * 1000,
+      env: 'UPDATE_ECHO_TTL_MS'
+    },
+    maxByteSize: {
+      doc: 'Upper bound on the in-memory echo cache size',
+      format: 'nat',
+      default: 8 * 1024 * 1024,
+      env: 'UPDATE_ECHO_MAX_BYTES'
+    }
   }
 })
 

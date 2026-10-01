@@ -35,7 +35,7 @@ describe('generate', () => {
   })
 
   test.each([
-    ['vat', /^GB\d{9}$/],
+    ['vat', /^\d{9}$/],
     ['mobile', /^07\d{9}$/],
     ['landline', /^01\d{9}$/],
     ['uprn', /^\d{12}$/],
