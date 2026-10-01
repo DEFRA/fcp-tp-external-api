@@ -15,6 +15,7 @@ in the same way `fcp-sfd-frontend` is.
 - [How it works](#how-it-works)
 - [The GraphQL API](#the-graphql-api)
 - [Sanitization](#sanitization)
+- [Echoing recent updates](#echoing-recent-updates)
 - [Entra setup](#entra-setup)
 - [Local development](#local-development)
 - [Configuration](#configuration)
@@ -232,6 +233,44 @@ the service throws rather than returning unsanitized data if it is missing.
 Keep `SANITIZE_SECRET` stable within an environment. Rotating it changes every fake value the
 API has ever returned.
 
+## Echoing recent updates
+
+Sanitization creates a problem for the third parties calling this API: a caller never sees real
+data, so after `updateBusinessAllFields`/`updateCustomerAllFields` succeeds, the next query
+re-sanitizes the record and returns a *different* fake value. The caller cannot tell whether
+their write actually took effect.
+
+This is safe to solve by remembering and replaying the caller's own submission, because when
+sanitization is on a caller only ever edits a fake value in the first place. Replaying it back
+reveals nothing they did not already know.
+
+When a mutation succeeds, the sanitized fields of its input (see
+[What is and is not substituted](#what-is-and-is-not-substituted)) are projected into the shape
+of the matching read type and kept in an in-memory cache (`src/update-echo/`), keyed by SBI or
+CRN. The next query for that SBI/CRN overlays the cached fragment onto the freshly sanitized
+response, so the caller sees what they submitted. Unsanitized fields, and anything the mutation
+accepted but has no read equivalent for (e.g. `legalStatusCode`, `title`), are never cached.
+
+The cache is plain `@hapi/catbox` backed by `@hapi/catbox-memory`, the same approach already used
+for the DAL token (`src/common/helpers/caching/token-cache.js`). That is only safe because this
+service runs a single replica: with more than one, an update and the following read could land on
+different instances and the echo would be missed. If that changes, this needs a shared store
+(e.g. `@hapi/catbox-redis`) instead.
+
+### Configuring it
+
+`UPDATE_ECHO_ENABLED` defaults to `true` and is a no-op whenever `SANITIZE_DATA` is `false`, since
+there is nothing to echo past when the data is already real. `UPDATE_ECHO_TTL_MS` (default 15
+minutes) bounds how long an echoed value is remembered for; once it expires the field reverts to
+a freshly sanitized fake value rather than the submitted one, which is an accepted trade-off
+rather than a bug.
+
+### Limitations
+
+The echo reflects what the caller *submitted*, not what the DAL actually persisted. If the DAL
+silently normalizes or rejects part of an update, the caller still sees their original value
+until the cache entry expires.
+
 ## Entra setup
 
 The service authenticates to the DAL with the OAuth 2.0 client credentials grant. You need an app
@@ -340,6 +379,8 @@ run misconfigured. See `src/config.js`, and `.env.example` for a working local s
 | `DAL_CLIENT_SECRET` | yes | | Entra client secret of this service |
 | `SANITIZE_DATA` | | `true` | Substitute business and personal data before responding |
 | `SANITIZE_SECRET` | yes, when sanitizing | | Secret keying the substitution |
+| `UPDATE_ECHO_ENABLED` | | `true` | Echo a caller's own recent updates back past the sanitizer |
+| `UPDATE_ECHO_TTL_MS` | | `900000` | How long an echoed update is remembered for |
 | `GRAPHQL_PATH` | | `/graphql` | Path the API is served from |
 | `GRAPHQL_INTROSPECTION_ENABLED` | | off in production | Allow schema introspection |
 | `LOG_LEVEL` | | `info` | Logging level |
