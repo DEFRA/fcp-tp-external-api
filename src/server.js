@@ -4,6 +4,7 @@ import { metrics } from '@defra/cdp-metrics'
 import { config } from './config.js'
 import { router } from './plugins/router.js'
 import { apollo } from './plugins/apollo.js'
+import { crnRestriction } from './plugins/crn-restriction.js'
 import { requestLogger } from './common/helpers/logging/request-logger.js'
 import { failAction } from './common/helpers/fail-action.js'
 import { pulse } from './common/helpers/pulse.js'
@@ -46,6 +47,7 @@ export async function createServer () {
   // requestTracing - trace header logging and propagation
   // secureContext  - loads CA certificates from environment config
   // pulse          - provides shutdown handlers
+  // crnRestriction - refuses callers whose Defra ID token is not for an allowed CRN
   // apollo         - serves the GraphQL API
   // router         - routes used in the app
   await server.register([
@@ -54,6 +56,7 @@ export async function createServer () {
     metrics,
     secureContext,
     pulse,
+    crnRestriction,
     apollo,
     router
   ])
