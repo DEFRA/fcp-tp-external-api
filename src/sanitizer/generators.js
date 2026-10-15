@@ -84,6 +84,18 @@ const generators = {
   // Stored and validated downstream as a bare 9 digit number, no "GB" prefix.
   vat: (seedHex) => generateDigits(seedHex, 0, 9),
 
+  traderNumber: (seedHex) => generateDigits(seedHex, 0, 6),
+  vendorNumber: (seedHex) => generateDigits(seedHex, 0, 6),
+
+  // County (2) / parish (3) / holding (4). Holdings 0001-4999 are the standard range, so the
+  // fake is never a temporary (7000s) or non-agricultural (8000s) holding.
+  cphNumber: (seedHex) => {
+    const county = String(generateNumber(seedHex, 0, 1, 99)).padStart(2, '0')
+    const parish = String(generateNumber(seedHex, 4, 1, 999)).padStart(3, '0')
+    const holding = String(generateNumber(seedHex, 8, 1, 4999)).padStart(4, '0')
+    return `${county}/${parish}/${holding}`
+  },
+
   dateOfBirth: (seedHex) => {
     const year = generateNumber(seedHex, 0, 1940, 2000)
     const month = generateNumber(seedHex, 4, 1, 12)

@@ -79,11 +79,42 @@ describe('sanitizeWith', () => {
     expect(result.sbi).toBe(BUSINESS.sbi)
     expect(result.organisationId).toBe(BUSINESS.organisationId)
     expect(result.info.name).toBe(BUSINESS.info.name)
-    expect(result.info.traderNumber).toBe(BUSINESS.info.traderNumber)
-    expect(result.info.vendorNumber).toBe(BUSINESS.info.vendorNumber)
     expect(result.info.legalStatus).toEqual(BUSINESS.info.legalStatus)
     expect(result.info.type).toEqual(BUSINESS.info.type)
-    expect(result.countyParishHoldings).toEqual(BUSINESS.countyParishHoldings)
+  })
+
+  test('replaces trader, vendor and county parish holding numbers', () => {
+    const result = sanitizeWith(BUSINESS, 'Business', SECRET)
+
+    expect(result.info.traderNumber).not.toBe(BUSINESS.info.traderNumber)
+    expect(result.info.traderNumber).toMatch(/^\d{6}$/)
+    expect(result.info.vendorNumber).not.toBe(BUSINESS.info.vendorNumber)
+    expect(result.info.vendorNumber).toMatch(/^\d{6}$/)
+    expect(result.countyParishHoldings).toHaveLength(1)
+    expect(result.countyParishHoldings[0].cphNumber).not.toBe('10/123/4567')
+    expect(result.countyParishHoldings[0].cphNumber).toMatch(/^\d{2}\/\d{3}\/\d{4}$/)
+  })
+
+  test('replaces every county parish holding and keeps their order', () => {
+    const business = {
+      ...BUSINESS,
+      countyParishHoldings: [{ cphNumber: '10/123/4567' }, { cphNumber: '01/234/0001' }, { cphNumber: null }]
+    }
+
+    const { countyParishHoldings } = sanitizeWith(business, 'Business', SECRET)
+
+    expect(countyParishHoldings).toHaveLength(3)
+    expect(countyParishHoldings[0].cphNumber).not.toBe('10/123/4567')
+    expect(countyParishHoldings[1].cphNumber).not.toBe('01/234/0001')
+    expect(countyParishHoldings[0].cphNumber).not.toBe(countyParishHoldings[1].cphNumber)
+    expect(countyParishHoldings[2].cphNumber).toBeNull()
+  })
+
+  test('does not reveal the real holding in the replacement', () => {
+    const { countyParishHoldings } = sanitizeWith(BUSINESS, 'Business', SECRET)
+
+    expect(countyParishHoldings[0].cphNumber).not.toContain('10/123')
+    expect(countyParishHoldings[0].cphNumber).not.toContain('4567')
   })
 
   test('preserves the customer reference number', () => {

@@ -68,7 +68,9 @@ describe('business query', () => {
     expect(errors).toBeUndefined()
     expect(data.business.sbi).toBe('107183280')
     expect(data.business.organisationId).toBe('5565448')
-    expect(data.business.countyParishHoldings).toEqual([{ cphNumber: '10/123/4567' }])
+    expect(data.business.countyParishHoldings).toHaveLength(1)
+    expect(data.business.countyParishHoldings[0].cphNumber).toMatch(/^\d{2}\/\d{3}\/\d{4}$/)
+    expect(data.business.countyParishHoldings[0].cphNumber).not.toBe('10/123/4567')
   })
 
   test('substitutes business and contact data before returning it', async () => {
@@ -81,6 +83,8 @@ describe('business query', () => {
     expect(info.address.postalCode).not.toBe(dalResponses.business.info.address.postalCode)
     expect(info.email.address).not.toBe(dalResponses.business.info.email.address)
     expect(info.phone.mobile).not.toBe(dalResponses.business.info.phone.mobile)
+    expect(info.traderNumber).not.toBe(dalResponses.business.info.traderNumber)
+    expect(info.vendorNumber).not.toBe(dalResponses.business.info.vendorNumber)
   })
 
   test('leaves identifiers and business name intact so the data stays joinable', async () => {
@@ -90,8 +94,6 @@ describe('business query', () => {
     const { info } = JSON.parse(response.payload).data.business
 
     expect(info.name).toBe(dalResponses.business.info.name)
-    expect(info.traderNumber).toBe(dalResponses.business.info.traderNumber)
-    expect(info.vendorNumber).toBe(dalResponses.business.info.vendorNumber)
     expect(info.legalStatus).toEqual(dalResponses.business.info.legalStatus)
   })
 

@@ -1,17 +1,24 @@
 // Which fields of each type carry business or personal data, and which
 // generator replaces them. Anything not listed is passed through untouched,
-// so identifiers stay usable: sbi, crn, organisationId, traderNumber,
-// vendorNumber, cphNumber, permission group ids and levels, and reference
-// data codes are all deliberately preserved.
+// so identifiers stay usable: sbi, crn, organisationId, permission group ids
+// and levels, and reference data codes are all deliberately preserved.
 export const sanitizeRules = {
   Business: {
     children: {
-      info: 'BusinessInfo'
+      info: 'BusinessInfo',
+      countyParishHoldings: 'CountyParishHolding'
+    }
+  },
+  CountyParishHolding: {
+    fields: {
+      cphNumber: 'cphNumber'
     }
   },
   BusinessInfo: {
     fields: {
-      vat: 'vat'
+      vat: 'vat',
+      traderNumber: 'traderNumber',
+      vendorNumber: 'vendorNumber'
     },
     children: {
       address: 'Address',
