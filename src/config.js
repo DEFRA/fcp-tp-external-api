@@ -3,6 +3,25 @@ import convictFormatWithValidator from 'convict-format-with-validator'
 
 convict.addFormats(convictFormatWithValidator)
 
+const CRN_PATTERN = /^[1-9]\d{9}$/
+
+// A comma separated list of CRNs. Blank entries are ignored, but a malformed one stops startup
+// so a typo can't silently lock someone out.
+convict.addFormat({
+  name: 'crn-list',
+  coerce: (value) => value.split(',').map((crn) => crn.trim()).filter(Boolean),
+  validate: (value) => {
+    if (!Array.isArray(value)) {
+      throw new TypeError('must be a comma separated list of CRNs')
+    }
+    for (const crn of value) {
+      if (!CRN_PATTERN.test(crn)) {
+        throw new TypeError('must only contain CRNs of ten digits, not starting with zero')
+      }
+    }
+  }
+})
+
 const isProduction = process.env.NODE_ENV === 'production'
 const isTest = process.env.NODE_ENV === 'test'
 
@@ -183,6 +202,21 @@ export const config = convict({
       nullable: true,
       default: null,
       env: 'SANITIZE_SECRET',
+      sensitive: true
+    }
+  },
+  crnRestriction: {
+    isEnabled: {
+      doc: 'Only allow requests whose Defra ID token is for a CRN in ALLOWED_CRNS',
+      format: Boolean,
+      default: true,
+      env: 'RESTRICT_CRNS'
+    },
+    allowedCrns: {
+      doc: 'Comma separated list of CRNs permitted to use the API while restriction is enabled',
+      format: 'crn-list',
+      default: [],
+      env: 'ALLOWED_CRNS',
       sensitive: true
     }
   },

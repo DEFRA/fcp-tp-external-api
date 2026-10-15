@@ -3,6 +3,7 @@ import Hapi from '@hapi/hapi'
 
 const mockLoggerInfo = vi.fn()
 const mockLoggerError = vi.fn()
+const mockLoggerWarn = vi.fn()
 
 const mockHapiLoggerInfo = vi.fn()
 
@@ -22,7 +23,8 @@ vi.mock('hapi-pino', () => ({
 vi.mock('../../../../src/common/helpers/logging/logger.js', () => ({
   createLogger: () => ({
     info: (...args) => mockLoggerInfo(...args),
-    error: (...args) => mockLoggerError(...args)
+    error: (...args) => mockLoggerError(...args),
+    warn: (...args) => mockLoggerWarn(...args)
   })
 }))
 

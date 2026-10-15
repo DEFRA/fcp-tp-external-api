@@ -8,7 +8,8 @@ const sharedEnv = {
   DAL_CLIENT_ID: 'test-client-id',
   DAL_CLIENT_SECRET: 'test-client-secret',
   SANITIZE_DATA: 'true',
-  SANITIZE_SECRET: 'test-sanitize-secret'
+  SANITIZE_SECRET: 'test-sanitize-secret',
+  RESTRICT_CRNS: 'false'
 }
 
 const coverageConfig = {

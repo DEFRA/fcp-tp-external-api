@@ -92,6 +92,7 @@ services:
       DAL_DISABLE_AUTH: 'true'
       SANITIZE_DATA: 'true'
       SANITIZE_SECRET: local-sanitize-secret-change-me
+      RESTRICT_CRNS: 'false'
       GRAPHQL_INTROSPECTION_ENABLED: 'true'
     networks:
       - fcp-tp-external-api

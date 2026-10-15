@@ -16,6 +16,7 @@ in the same way `fcp-sfd-frontend` is.
 - [The GraphQL API](#the-graphql-api)
 - [Sanitization](#sanitization)
 - [Echoing recent updates](#echoing-recent-updates)
+- [Restricting access by CRN](#restricting-access-by-crn)
 - [Entra setup](#entra-setup)
 - [Local development](#local-development)
 - [Configuration](#configuration)
@@ -74,7 +75,8 @@ This service does **not** authenticate its callers. The API gateway sitting in f
 every deployed environment does that. What the service does care about is the caller's Defra ID
 token: it is read from `x-forwarded-authorization` (falling back to `authorization`) and passed
 straight through to the DAL as `x-forwarded-authorization`, so the DAL can apply the end user's
-own permissions. The service never inspects or validates it.
+own permissions. The service never validates it. The only thing it reads from it is the CRN, to
+[restrict access to an allow-list of CRNs](#restricting-access-by-crn).
 
 ### Outbound requests to the DAL
 
@@ -271,6 +273,49 @@ The echo reflects what the caller *submitted*, not what the DAL actually persist
 silently normalizes or rejects part of an update, the caller still sees their original value
 until the cache entry expires.
 
+## Restricting access by CRN
+
+As an extra safeguard, the API only serves callers whose Defra ID token is for a CRN on an
+allow-list. This matters where several accounts share a password, so knowing a CRN is enough to
+sign in as that person.
+
+- `RESTRICT_CRNS` (default `true`) turns the restriction on or off.
+- `ALLOWED_CRNS` is a comma separated list of the CRNs that may use the API, for example
+  `ALLOWED_CRNS=1102634220,1111111902`. Spaces and blank entries are ignored. A malformed CRN
+  (not ten digits, or starting with zero) stops the service starting.
+
+While `RESTRICT_CRNS` is `true`, a request to the GraphQL endpoint is refused with
+**HTTP 403** and no DAL call is made unless the CRN in its Defra ID token (the `contactId` claim) is
+in `ALLOWED_CRNS`. The response is shaped like a GraphQL error and never says why, or which CRNs are
+allowed:
+
+```json
+{
+  "errors": [
+    {
+      "message": "The signed-in user does not have permission to access this data",
+      "extensions": { "code": "FORBIDDEN" }
+    }
+  ]
+}
+```
+
+The same response is returned when there is no token, the token is not a Defra ID token, or
+`ALLOWED_CRNS` is empty. In that last case the service still starts, so every request is refused
+and a warning is logged at startup. Set `RESTRICT_CRNS=false` to permit any CRN, which logs a
+warning at startup too. `GET /health` is never restricted.
+
+Things to be aware of:
+
+- Because it defaults to `true`, every deployed environment must set `ALLOWED_CRNS` or
+  `RESTRICT_CRNS=false`, otherwise all requests are refused.
+- Only the CRN **in the caller's token** is checked, not the `crn` or `sbi` a query asks about.
+- The token's signature is not verified here, only decoded. The DAL verifies it on every call, so a
+  forged token for an allowed CRN passes this check but is rejected by the DAL.
+- Refused requests are logged with a reason and the CRN masked to its last four digits. The token
+  is never logged.
+- Locally, `.env.example` and `compose.yml` set `RESTRICT_CRNS=false`.
+
 ## Entra setup
 
 The service authenticates to the DAL with the OAuth 2.0 client credentials grant. You need an app
@@ -381,6 +426,8 @@ run misconfigured. See `src/config.js`, and `.env.example` for a working local s
 | `SANITIZE_SECRET` | yes, when sanitizing | | Secret keying the substitution |
 | `UPDATE_ECHO_ENABLED` | | `true` | Echo a caller's own recent updates back past the sanitizer |
 | `UPDATE_ECHO_TTL_MS` | | `900000` | How long an echoed update is remembered for |
+| `RESTRICT_CRNS` | | `true` | Only allow callers whose Defra ID token is for a CRN in `ALLOWED_CRNS` |
+| `ALLOWED_CRNS` | | | Comma separated CRNs permitted while `RESTRICT_CRNS` is `true`. Empty refuses every request |
 | `GRAPHQL_PATH` | | `/graphql` | Path the API is served from |
 | `GRAPHQL_INTROSPECTION_ENABLED` | | off in production | Allow schema introspection |
 | `LOG_LEVEL` | | `info` | Logging level |
