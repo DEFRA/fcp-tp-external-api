@@ -36,6 +36,9 @@ describe('generate', () => {
 
   test.each([
     ['vat', /^\d{9}$/],
+    ['traderNumber', /^\d{6}$/],
+    ['vendorNumber', /^\d{6}$/],
+    ['cphNumber', /^\d{2}\/\d{3}\/\d{4}$/],
     ['mobile', /^07\d{9}$/],
     ['landline', /^01\d{9}$/],
     ['uprn', /^\d{12}$/],

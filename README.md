@@ -216,12 +216,15 @@ gets two different substitutions, which stops anyone inferring which fields orig
 
 Which fields are substituted is declared per type in `src/sanitizer/rules.js`.
 
-**Substituted:** VAT number, all address fields (including UPRN), email addresses, phone numbers,
-customer names, and date of birth.
+**Substituted:** VAT number, trader number, vendor number, CPH numbers, all address fields
+(including UPRN), email addresses, phone numbers, customer names, and date of birth. Trader and
+vendor numbers become six digits and CPH numbers keep the `CC/PPP/HHHH` shape. The DAL documents
+the CPH format but defines none for trader and vendor numbers, so six digits is borrowed from the
+upstream mock's data.
 
 **Preserved:** identifiers and reference data, because they are what make the response usable.
-That means SBI, CRN, organisation ID, business name, trader number, vendor number, CPH number,
-permission group IDs and levels, and legal status and business type codes.
+That means SBI, CRN, organisation ID, business name, permission group IDs and levels, and legal
+status and business type codes.
 
 A field with no rule is left untouched. A field whose rule names a generator that does not exist
 becomes `[REDACTED]` rather than leaking the original, so a mistake in the rules fails safe.
