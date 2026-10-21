@@ -55,7 +55,14 @@ export async function queryDal (query, variables, { forwardedUserToken } = {}) {
   if (!response.ok) {
     // The DAL explains non-200 responses in the body, so keep that detail rather than discarding it.
     const errors = await readErrors(response)
-    logger.error({ status: response.status, errors }, 'DAL responded with a non-success status')
+    // Only CDP's streamlined ECS fields are indexed, so use http.response.status_code and error.* rather than ad hoc keys.
+    logger.error(
+      {
+        http: { response: { status_code: response.status } },
+        error: { code: errors[0]?.extensions?.code, message: errors[0]?.message }
+      },
+      'DAL responded with a non-success status'
+    )
     throw dalError(
       'The data access layer rejected the request',
       'DAL_REQUEST_REJECTED',
