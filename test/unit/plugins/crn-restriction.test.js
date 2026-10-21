@@ -149,7 +149,10 @@ describe('crn restriction', () => {
       await post({ 'x-forwarded-authorization': token })
 
       expect(mockLogger.warn).toHaveBeenCalledWith(
-        { reason: 'not-allowed', crn: '******1902' },
+        {
+          event: { action: 'crn-restriction', outcome: 'failure', reason: 'not-allowed' },
+          user: { id: '******1902' }
+        },
         'Request refused by CRN restriction'
       )
       expect(JSON.stringify(mockLogger.warn.mock.calls)).not.toContain(token)
@@ -162,7 +165,10 @@ describe('crn restriction', () => {
     ])('logs the %s reason with no CRN', async (reason, headers) => {
       await post(headers)
 
-      expect(mockLogger.warn).toHaveBeenCalledWith({ reason, crn: null }, 'Request refused by CRN restriction')
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        { event: { action: 'crn-restriction', outcome: 'failure', reason } },
+        'Request refused by CRN restriction'
+      )
     })
   })
 })

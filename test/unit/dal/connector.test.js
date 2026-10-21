@@ -9,7 +9,7 @@ vi.mock('../../../src/services/dal/token/get-token-service.js', () => ({
 const { queryDal } = await import('../../../src/dal/connector.js')
 
 function jsonResponse (body, { ok = true, status = 200 } = {}) {
-  return { ok, status, json: async () => body }
+  return { ok, status, json: async () => body, text: async () => JSON.stringify(body) }
 }
 
 describe('queryDal', () => {
@@ -77,6 +77,32 @@ describe('queryDal', () => {
     await expect(queryDal('query {}', {})).rejects.toMatchObject({
       extensions: { code: 'DAL_REQUEST_REJECTED', status: 403 }
     })
+  })
+
+  test('keeps the DAL explanation when a non-200 response carries errors', async () => {
+    fetch.mockResolvedValue(
+      jsonResponse(
+        { errors: [{ message: 'Customer not found', extensions: { code: 'NOT_FOUND' } }], data: { customer: null } },
+        { ok: false, status: 404 }
+      )
+    )
+
+    await expect(queryDal('query {}', {})).rejects.toMatchObject({
+      extensions: {
+        code: 'DAL_REQUEST_REJECTED',
+        status: 404,
+        dalMessage: 'Customer not found',
+        dalCode: 'NOT_FOUND'
+      }
+    })
+  })
+
+  test('reports a rejected request when the body is not valid JSON', async () => {
+    fetch.mockResolvedValue({ ok: false, status: 502, text: async () => '<html>Bad Gateway</html>' })
+
+    const error = await queryDal('query {}', {}).catch((err) => err)
+
+    expect(error.extensions).toEqual({ code: 'DAL_REQUEST_REJECTED', status: 502 })
   })
 
   test('surfaces errors returned in the DAL response body', async () => {
