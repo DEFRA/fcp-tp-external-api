@@ -59,7 +59,13 @@ export const crnRestriction = {
           return h.continue
         }
 
-        logger.warn({ reason: denial.reason, crn: maskCrn(denial.crn) }, 'Request refused by CRN restriction')
+        logger.warn(
+          {
+            event: { action: 'crn-restriction', outcome: 'failure', reason: denial.reason },
+            ...(denial.crn && { user: { id: maskCrn(denial.crn) } })
+          },
+          'Request refused by CRN restriction'
+        )
 
         return h
           .response({ errors: [{ message: FORBIDDEN_MESSAGE, extensions: { code: 'FORBIDDEN' } }] })

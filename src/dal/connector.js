@@ -78,7 +78,10 @@ export async function queryDal (query, variables, { forwardedUserToken } = {}) {
   const body = await response.json()
 
   if (body.errors?.length) {
-    logger.error({ errors: body.errors }, 'DAL responded with errors')
+    logger.error(
+      { error: { code: body.errors[0].extensions?.code, message: body.errors[0].message } },
+      `DAL responded with ${body.errors.length} error(s)`
+    )
     throw dalError(body.errors[0].message, body.errors[0].extensions?.code ?? 'DAL_ERROR')
   }
 

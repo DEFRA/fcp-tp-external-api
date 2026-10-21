@@ -23,7 +23,7 @@ export async function retry (fn, retriesLeft = 3, interval = 1000, exponential =
       throw err
     }
 
-    logger.warn({ err, retriesLeft }, 'Retrying DAL token request')
+    logger.warn(err, `Retrying DAL token request (${retriesLeft} retries left)`)
     await new Promise((resolve) => setTimeout(resolve, interval))
 
     return retry(fn, retriesLeft - 1, exponential ? interval * 2 : interval, exponential)
