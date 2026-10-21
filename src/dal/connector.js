@@ -55,7 +55,6 @@ export async function queryDal (query, variables, { forwardedUserToken } = {}) {
   if (!response.ok) {
     // The DAL explains non-200 responses in the body, so keep that detail rather than discarding it.
     const errors = await readErrors(response)
-    // Only CDP's streamlined ECS fields are indexed, so use http.response.status_code and error.* rather than ad hoc keys.
     logger.error(
       {
         http: { response: { status_code: response.status } },
