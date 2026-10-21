@@ -28,6 +28,15 @@ function dalError (message, code, extensions = {}) {
   return new GraphQLError(message, { extensions: { code, ...extensions } })
 }
 
+async function readErrors (response) {
+  try {
+    const body = JSON.parse(await response.text())
+    return Array.isArray(body?.errors) ? body.errors : []
+  } catch {
+    return []
+  }
+}
+
 export async function queryDal (query, variables, { forwardedUserToken } = {}) {
   const bearerToken = await getToken()
 
@@ -44,11 +53,19 @@ export async function queryDal (query, variables, { forwardedUserToken } = {}) {
   }
 
   if (!response.ok) {
-    logger.error({ status: response.status }, 'DAL responded with a non-success status')
+    // The DAL explains non-200 responses in the body, so keep that detail rather than discarding it.
+    const errors = await readErrors(response)
+    logger.error({ status: response.status, errors }, 'DAL responded with a non-success status')
     throw dalError(
       'The data access layer rejected the request',
       'DAL_REQUEST_REJECTED',
-      { status: response.status }
+      {
+        status: response.status,
+        ...(errors.length && {
+          dalMessage: errors[0].message,
+          dalCode: errors[0].extensions?.code
+        })
+      }
     )
   }
 
