@@ -8,8 +8,8 @@ vi.mock('../../../src/services/dal/token/get-token-service.js', () => ({
   getToken: vi.fn().mockResolvedValue('******')
 }))
 
-const ALLOWED_CRN = '1102634220'
-const OTHER_CRN = '1111111902'
+const ALLOWED_CRN = '1000000001'
+const OTHER_CRN = '1000000002'
 
 const CUSTOMER_QUERY = `
   query Customer($crn: ID!) {
@@ -65,7 +65,7 @@ describe('CRN restriction', () => {
     const response = await graphqlRequest(server, CUSTOMER_QUERY, { crn: ALLOWED_CRN }, asUser(ALLOWED_CRN))
 
     expect(response.statusCode).toBe(200)
-    expect(JSON.parse(response.payload).data.customer.crn).toBe('1102634220')
+    expect(JSON.parse(response.payload).data.customer.crn).toBe(dalResponses.customer.crn)
   })
 
   test('refuses a query from a CRN that is not allowed, without calling the DAL', async () => {

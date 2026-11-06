@@ -5,10 +5,10 @@ const SECRET = 'test-secret'
 
 const BUSINESS = {
   organisationId: '5565448',
-  sbi: '107183280',
+  sbi: '123456789',
   info: {
     name: 'Henderson Family Farms',
-    vat: '123456789',
+    vat: '987654321',
     traderNumber: '010203040506',
     vendorNumber: '694523',
     legalStatus: { code: '102111', type: 'Sole Proprietorship' },
@@ -39,7 +39,7 @@ const BUSINESS = {
 }
 
 const CUSTOMER = {
-  crn: '1102634220',
+  crn: '1234567890',
   info: {
     name: { first: 'James', middle: 'Alan', last: 'Henderson' },
     dateOfBirth: '1972-04-17',
@@ -152,7 +152,7 @@ describe('sanitizeWith', () => {
 
   test('preserves null and undefined values', () => {
     const result = sanitizeWith(
-      { crn: '1102634220', info: { name: { first: 'James', middle: null, last: 'Henderson' }, address: null, email: null, phone: null } },
+      { crn: '1234567890', info: { name: { first: 'James', middle: null, last: 'Henderson' }, address: null, email: null, phone: null } },
       'Customer',
       SECRET
     )

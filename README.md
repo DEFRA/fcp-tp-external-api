@@ -284,7 +284,7 @@ sign in as that person.
 
 - `RESTRICT_CRNS` (default `true`) turns the restriction on or off.
 - `ALLOWED_CRNS` is a comma separated list of the CRNs that may use the API, for example
-  `ALLOWED_CRNS=1102634220,1111111902`. Spaces and blank entries are ignored. A malformed CRN
+  `ALLOWED_CRNS=1000000001,1000000002`. Spaces and blank entries are ignored. A malformed CRN
   (not ten digits, or starting with zero) stops the service starting.
 
 While `RESTRICT_CRNS` is `true`, a request to the GraphQL endpoint is refused with

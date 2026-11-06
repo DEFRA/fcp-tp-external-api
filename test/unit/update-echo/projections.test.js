@@ -3,20 +3,20 @@ import { projectBusinessUpdate, projectCustomerUpdate } from '../../../src/updat
 
 describe('projectBusinessUpdate', () => {
   test('returns null when nothing echoable was submitted', () => {
-    expect(projectBusinessUpdate({ sbi: '107183280', name: 'Henderson Family Farms' })).toBeNull()
+    expect(projectBusinessUpdate({ sbi: '123456789', name: 'Henderson Family Farms' })).toBeNull()
   })
 
   test('projects vat, email and phone as submitted', () => {
     const input = {
-      sbi: '107183280',
-      vat: '123456789',
+      sbi: '123456789',
+      vat: '987654321',
       email: { address: 'new@example.com' },
       phone: { mobile: '07700900000', landline: '01144960123' }
     }
 
     expect(projectBusinessUpdate(input)).toEqual({
       info: {
-        vat: '123456789',
+        vat: '987654321',
         email: { address: 'new@example.com' },
         phone: { mobile: '07700900000', landline: '01144960123' }
       }
@@ -25,7 +25,7 @@ describe('projectBusinessUpdate', () => {
 
   test('projects an address from whichever oneOf branch was submitted', () => {
     const withUprn = projectBusinessUpdate({
-      sbi: '107183280',
+      sbi: '123456789',
       address: { withUprn: { line1: '1 New Street', city: 'Leeds', postalCode: 'LS1 1AA', country: 'UK', uprn: '123' } }
     })
 
@@ -34,7 +34,7 @@ describe('projectBusinessUpdate', () => {
     })
 
     const withoutUprn = projectBusinessUpdate({
-      sbi: '107183280',
+      sbi: '123456789',
       address: { withoutUprn: { line1: '2 New Street', city: 'Leeds', postalCode: 'LS1 1AB', country: 'UK' } }
     })
 
@@ -44,14 +44,14 @@ describe('projectBusinessUpdate', () => {
   })
 
   test('keeps an explicit null as a clear rather than dropping the field', () => {
-    expect(projectBusinessUpdate({ sbi: '107183280', email: null })).toEqual({ info: { email: null } })
-    expect(projectBusinessUpdate({ sbi: '107183280', phone: null })).toEqual({ info: { phone: null } })
-    expect(projectBusinessUpdate({ sbi: '107183280', address: null })).toEqual({ info: { address: null } })
+    expect(projectBusinessUpdate({ sbi: '123456789', email: null })).toEqual({ info: { email: null } })
+    expect(projectBusinessUpdate({ sbi: '123456789', phone: null })).toEqual({ info: { phone: null } })
+    expect(projectBusinessUpdate({ sbi: '123456789', address: null })).toEqual({ info: { address: null } })
   })
 
   test('excludes fields that are not sanitized or have no read equivalent', () => {
     const input = {
-      sbi: '107183280',
+      sbi: '123456789',
       name: 'Henderson Family Farms',
       legalStatusCode: 1,
       typeCode: 2,
@@ -69,12 +69,12 @@ describe('projectBusinessUpdate', () => {
 
 describe('projectCustomerUpdate', () => {
   test('returns null when nothing echoable was submitted', () => {
-    expect(projectCustomerUpdate({ crn: '1102634220', title: 'Mr' })).toBeNull()
+    expect(projectCustomerUpdate({ crn: '1234567890', title: 'Mr' })).toBeNull()
   })
 
   test('projects name parts, dateOfBirth, email, phone and address', () => {
     const input = {
-      crn: '1102634220',
+      crn: '1234567890',
       first: 'Jamie',
       middle: 'Alan',
       last: 'Henderson',
@@ -96,21 +96,21 @@ describe('projectCustomerUpdate', () => {
   })
 
   test('projects a partial name update', () => {
-    expect(projectCustomerUpdate({ crn: '1102634220', first: 'Jamie' })).toEqual({
+    expect(projectCustomerUpdate({ crn: '1234567890', first: 'Jamie' })).toEqual({
       info: { name: { first: 'Jamie' } }
     })
-    expect(projectCustomerUpdate({ crn: '1102634220', last: 'Smith' })).toEqual({
+    expect(projectCustomerUpdate({ crn: '1234567890', last: 'Smith' })).toEqual({
       info: { name: { last: 'Smith' } }
     })
   })
 
   test('excludes fields that are not sanitized or have no read equivalent', () => {
-    const input = { crn: '1102634220', title: 'Mr', otherTitle: 'Dr', doNotContact: true }
+    const input = { crn: '1234567890', title: 'Mr', otherTitle: 'Dr', doNotContact: true }
 
     expect(projectCustomerUpdate(input)).toBeNull()
   })
 
   test('keeps an explicit null address as a clear', () => {
-    expect(projectCustomerUpdate({ crn: '1102634220', address: null })).toEqual({ info: { address: null } })
+    expect(projectCustomerUpdate({ crn: '1234567890', address: null })).toEqual({ info: { address: null } })
   })
 })

@@ -15,7 +15,7 @@ function jsonResponse (body, { ok = true, status = 200 } = {}) {
 describe('queryDal', () => {
   beforeEach(() => {
     getToken.mockResolvedValue('Bearer a-token')
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ data: { business: { sbi: '107183280' } } })))
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ data: { business: { sbi: '123456789' } } })))
   })
 
   afterEach(() => {
@@ -23,14 +23,14 @@ describe('queryDal', () => {
   })
 
   test('posts the query and variables to the DAL', async () => {
-    await queryDal('query Business { business { sbi } }', { sbi: '107183280' })
+    await queryDal('query Business { business { sbi } }', { sbi: '123456789' })
 
     const [endpoint, options] = fetch.mock.calls[0]
     expect(endpoint).toBe('http://localhost:3000/graphql')
     expect(options.method).toBe('POST')
     expect(JSON.parse(options.body)).toEqual({
       query: 'query Business { business { sbi } }',
-      variables: { sbi: '107183280' }
+      variables: { sbi: '123456789' }
     })
   })
 
@@ -59,7 +59,7 @@ describe('queryDal', () => {
   test('returns the data from the DAL response', async () => {
     const data = await queryDal('query {}', {})
 
-    expect(data).toEqual({ business: { sbi: '107183280' } })
+    expect(data).toEqual({ business: { sbi: '123456789' } })
   })
 
   test('reports an unreachable DAL', async () => {
