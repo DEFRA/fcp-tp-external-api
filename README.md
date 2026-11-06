@@ -30,7 +30,7 @@ in the same way `fcp-sfd-frontend` is.
 
 | | |
 | --- | --- |
-| Runtime | Node.js 24, ES modules |
+| Runtime | Node.js 26, ES modules |
 | Framework | Hapi 21 |
 | API | Apollo Server 5 mounted on Hapi at `/graphql` |
 | Port | 3001 |
@@ -353,7 +353,7 @@ from Entra entirely. A placeholder bearer token is sent instead.
 
 ### Prerequisites
 
-- Node.js 24 (`nvm use` picks it up from `.nvmrc`)
+- Node.js 26 (`nvm use` picks it up from `.nvmrc`)
 - Docker
 
 ### Running
