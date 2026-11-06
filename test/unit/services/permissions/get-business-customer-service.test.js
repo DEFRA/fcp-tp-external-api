@@ -22,10 +22,10 @@ describe('getBusinessCustomer', () => {
       }
     })
 
-    const result = await getBusinessCustomer('107183280', '1102634220')
+    const result = await getBusinessCustomer('123456789', '1234567890')
 
     expect(result).toEqual({
-      crn: '1102634220',
+      crn: '1234567890',
       permissionGroups: [{ id: 'BUSINESS_DETAILS', level: 'AMEND' }]
     })
   })
@@ -33,17 +33,17 @@ describe('getBusinessCustomer', () => {
   test('returns null when the DAL has no matching customer for the business', async () => {
     queryDal.mockResolvedValue({ business: { customer: null } })
 
-    expect(await getBusinessCustomer('107183280', '1102634220')).toBeNull()
+    expect(await getBusinessCustomer('123456789', '1234567890')).toBeNull()
   })
 
   test('forwards the caller token to the DAL', async () => {
     queryDal.mockResolvedValue({ business: { customer: { permissionGroups: [] } } })
 
-    await getBusinessCustomer('107183280', '1102634220', { forwardedUserToken: 'Bearer a-token' })
+    await getBusinessCustomer('123456789', '1234567890', { forwardedUserToken: 'Bearer a-token' })
 
     expect(queryDal).toHaveBeenCalledWith(
       expect.any(String),
-      { sbi: '107183280', crn: '1102634220' },
+      { sbi: '123456789', crn: '1234567890' },
       { forwardedUserToken: 'Bearer a-token' }
     )
   })

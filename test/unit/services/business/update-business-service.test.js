@@ -21,24 +21,24 @@ describe('updateBusiness', () => {
 
   test('returns the DAL mutation result', async () => {
     queryDal.mockResolvedValue({
-      updateBusinessAllFields: { success: true, business: { sbi: '107183280' } }
+      updateBusinessAllFields: { success: true, business: { sbi: '123456789' } }
     })
 
-    const result = await updateBusiness({ sbi: '107183280', name: 'Henderson Family Farms' })
+    const result = await updateBusiness({ sbi: '123456789', name: 'Henderson Family Farms' })
 
-    expect(result).toEqual({ success: true, business: { sbi: '107183280' } })
+    expect(result).toEqual({ success: true, business: { sbi: '123456789' } })
   })
 
   test('returns null when the DAL response has no result', async () => {
     queryDal.mockResolvedValue({})
 
-    expect(await updateBusiness({ sbi: '107183280' })).toBeNull()
+    expect(await updateBusiness({ sbi: '123456789' })).toBeNull()
   })
 
   test('forwards the input and caller token to the DAL', async () => {
     queryDal.mockResolvedValue({ updateBusinessAllFields: { success: true } })
 
-    const input = { sbi: '107183280', vat: '123456789' }
+    const input = { sbi: '123456789', vat: '987654321' }
     await updateBusiness(input, { forwardedUserToken: 'Bearer a-token' })
 
     expect(queryDal).toHaveBeenCalledWith(
@@ -51,16 +51,16 @@ describe('updateBusiness', () => {
   test('remembers a successful update for the echo cache', async () => {
     queryDal.mockResolvedValue({ updateBusinessAllFields: { success: true } })
 
-    const input = { sbi: '107183280', vat: '123456789' }
+    const input = { sbi: '123456789', vat: '987654321' }
     await updateBusiness(input)
 
-    expect(rememberUpdate).toHaveBeenCalledWith('Business', '107183280', { info: { vat: '123456789' } })
+    expect(rememberUpdate).toHaveBeenCalledWith('Business', '123456789', { info: { vat: '987654321' } })
   })
 
   test('does not remember an unsuccessful update', async () => {
     queryDal.mockResolvedValue({ updateBusinessAllFields: { success: false } })
 
-    await updateBusiness({ sbi: '107183280', vat: '123456789' })
+    await updateBusiness({ sbi: '123456789', vat: '987654321' })
 
     expect(rememberUpdate).not.toHaveBeenCalled()
   })

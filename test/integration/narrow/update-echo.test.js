@@ -72,23 +72,23 @@ afterEach(() => {
 describe('echoing a recent update back past the sanitizer', () => {
   test('a business query returns the value just submitted by an update, not a freshly sanitized one', async () => {
     mockDal({ updateBusinessAllFields: { success: true } })
-    const input = { sbi: '107183280', vat: '999999999' }
+    const input = { sbi: '123456789', vat: '999999999' }
     await graphqlRequest(server, UPDATE_BUSINESS_MUTATION, { input })
 
     mockDal({ business: dalResponses.business })
-    const response = await graphqlRequest(server, BUSINESS_QUERY, { sbi: '107183280' })
+    const response = await graphqlRequest(server, BUSINESS_QUERY, { sbi: '123456789' })
     const { info, sbi } = JSON.parse(response.payload).data.business
 
-    expect(sbi).toBe('107183280')
+    expect(sbi).toBe('123456789')
     expect(info.vat).toBe('999999999')
   })
 
   test('fields not touched by the update are still sanitized', async () => {
     mockDal({ updateBusinessAllFields: { success: true } })
-    await graphqlRequest(server, UPDATE_BUSINESS_MUTATION, { input: { sbi: '107183280', vat: '999999999' } })
+    await graphqlRequest(server, UPDATE_BUSINESS_MUTATION, { input: { sbi: '123456789', vat: '999999999' } })
 
     mockDal({ business: dalResponses.business })
-    const response = await graphqlRequest(server, BUSINESS_QUERY, { sbi: '107183280' })
+    const response = await graphqlRequest(server, BUSINESS_QUERY, { sbi: '123456789' })
     const { info } = JSON.parse(response.payload).data.business
 
     expect(info.email.address).not.toBe(dalResponses.business.info.email.address)
@@ -96,10 +96,10 @@ describe('echoing a recent update back past the sanitizer', () => {
 
   test('an unsuccessful update is not echoed', async () => {
     mockDal({ updateBusinessAllFields: { success: false } })
-    await graphqlRequest(server, UPDATE_BUSINESS_MUTATION, { input: { sbi: '107183280', vat: '999999999' } })
+    await graphqlRequest(server, UPDATE_BUSINESS_MUTATION, { input: { sbi: '123456789', vat: '999999999' } })
 
     mockDal({ business: dalResponses.business })
-    const response = await graphqlRequest(server, BUSINESS_QUERY, { sbi: '107183280' })
+    const response = await graphqlRequest(server, BUSINESS_QUERY, { sbi: '123456789' })
     const { info } = JSON.parse(response.payload).data.business
 
     expect(info.vat).not.toBe('999999999')
@@ -107,11 +107,11 @@ describe('echoing a recent update back past the sanitizer', () => {
 
   test('a customer query returns the value just submitted by an update', async () => {
     mockDal({ updateCustomerAllFields: { success: true } })
-    const input = { crn: '1102634220', first: 'Jamie' }
+    const input = { crn: '1234567890', first: 'Jamie' }
     await graphqlRequest(server, UPDATE_CUSTOMER_MUTATION, { input })
 
     mockDal({ customer: dalResponses.customer })
-    const response = await graphqlRequest(server, CUSTOMER_QUERY, { crn: '1102634220' })
+    const response = await graphqlRequest(server, CUSTOMER_QUERY, { crn: '1234567890' })
     const { info } = JSON.parse(response.payload).data.customer
 
     expect(info.name.first).toBe('Jamie')
@@ -126,10 +126,10 @@ describe('echoing a recent update back past the sanitizer', () => {
     await disabledServer.initialize()
 
     mockDal({ updateBusinessAllFields: { success: true } })
-    await graphqlRequest(disabledServer, UPDATE_BUSINESS_MUTATION, { input: { sbi: '107183280', vat: '999999999' } })
+    await graphqlRequest(disabledServer, UPDATE_BUSINESS_MUTATION, { input: { sbi: '123456789', vat: '999999999' } })
 
     mockDal({ business: dalResponses.business })
-    const response = await graphqlRequest(disabledServer, BUSINESS_QUERY, { sbi: '107183280' })
+    const response = await graphqlRequest(disabledServer, BUSINESS_QUERY, { sbi: '123456789' })
     const { info } = JSON.parse(response.payload).data.business
 
     expect(info.vat).not.toBe('999999999')

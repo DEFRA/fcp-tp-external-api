@@ -21,24 +21,24 @@ describe('updateCustomer', () => {
 
   test('returns the DAL mutation result', async () => {
     queryDal.mockResolvedValue({
-      updateCustomerAllFields: { success: true, customer: { crn: '1102634220' } }
+      updateCustomerAllFields: { success: true, customer: { crn: '1234567890' } }
     })
 
-    const result = await updateCustomer({ crn: '1102634220', first: 'James' })
+    const result = await updateCustomer({ crn: '1234567890', first: 'James' })
 
-    expect(result).toEqual({ success: true, customer: { crn: '1102634220' } })
+    expect(result).toEqual({ success: true, customer: { crn: '1234567890' } })
   })
 
   test('returns null when the DAL response has no result', async () => {
     queryDal.mockResolvedValue({})
 
-    expect(await updateCustomer({ crn: '1102634220' })).toBeNull()
+    expect(await updateCustomer({ crn: '1234567890' })).toBeNull()
   })
 
   test('forwards the input and caller token to the DAL', async () => {
     queryDal.mockResolvedValue({ updateCustomerAllFields: { success: true } })
 
-    const input = { crn: '1102634220', last: 'Henderson' }
+    const input = { crn: '1234567890', last: 'Henderson' }
     await updateCustomer(input, { forwardedUserToken: 'Bearer a-token' })
 
     expect(queryDal).toHaveBeenCalledWith(
@@ -51,16 +51,16 @@ describe('updateCustomer', () => {
   test('remembers a successful update for the echo cache', async () => {
     queryDal.mockResolvedValue({ updateCustomerAllFields: { success: true } })
 
-    const input = { crn: '1102634220', first: 'James' }
+    const input = { crn: '1234567890', first: 'James' }
     await updateCustomer(input)
 
-    expect(rememberUpdate).toHaveBeenCalledWith('Customer', '1102634220', { info: { name: { first: 'James' } } })
+    expect(rememberUpdate).toHaveBeenCalledWith('Customer', '1234567890', { info: { name: { first: 'James' } } })
   })
 
   test('does not remember an unsuccessful update', async () => {
     queryDal.mockResolvedValue({ updateCustomerAllFields: { success: false } })
 
-    await updateCustomer({ crn: '1102634220', first: 'James' })
+    await updateCustomer({ crn: '1234567890', first: 'James' })
 
     expect(rememberUpdate).not.toHaveBeenCalled()
   })

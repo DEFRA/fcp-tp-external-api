@@ -3,10 +3,10 @@ import { vi } from 'vitest'
 export const dalResponses = {
   business: {
     organisationId: '5565448',
-    sbi: '107183280',
+    sbi: '123456789',
     info: {
       name: 'Henderson Family Farms',
-      vat: '123456789',
+      vat: '987654321',
       traderNumber: '010203040506',
       vendorNumber: '694523',
       legalStatus: { code: '102111', type: 'Sole Proprietorship' },
@@ -36,7 +36,7 @@ export const dalResponses = {
     countyParishHoldings: [{ cphNumber: '10/123/4567' }]
   },
   customer: {
-    crn: '1102634220',
+    crn: '1234567890',
     info: {
       name: { first: 'James', middle: 'Alan', last: 'Henderson' },
       dateOfBirth: '1972-04-17',

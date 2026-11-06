@@ -61,12 +61,12 @@ describe('business query', () => {
   test('returns the business for a valid sbi', async () => {
     mockDal({ business: dalResponses.business })
 
-    const response = await graphqlRequest(server, BUSINESS_QUERY, { sbi: '107183280' })
+    const response = await graphqlRequest(server, BUSINESS_QUERY, { sbi: '123456789' })
     const { data, errors } = JSON.parse(response.payload)
 
     expect(response.statusCode).toBe(200)
     expect(errors).toBeUndefined()
-    expect(data.business.sbi).toBe('107183280')
+    expect(data.business.sbi).toBe('123456789')
     expect(data.business.organisationId).toBe('5565448')
     expect(data.business.countyParishHoldings).toHaveLength(1)
     expect(data.business.countyParishHoldings[0].cphNumber).toMatch(/^\d{2}\/\d{3}\/\d{4}$/)
@@ -76,7 +76,7 @@ describe('business query', () => {
   test('substitutes business and contact data before returning it', async () => {
     mockDal({ business: dalResponses.business })
 
-    const response = await graphqlRequest(server, BUSINESS_QUERY, { sbi: '107183280' })
+    const response = await graphqlRequest(server, BUSINESS_QUERY, { sbi: '123456789' })
     const { info } = JSON.parse(response.payload).data.business
 
     expect(info.vat).not.toBe(dalResponses.business.info.vat)
@@ -90,7 +90,7 @@ describe('business query', () => {
   test('leaves identifiers and business name intact so the data stays joinable', async () => {
     mockDal({ business: dalResponses.business })
 
-    const response = await graphqlRequest(server, BUSINESS_QUERY, { sbi: '107183280' })
+    const response = await graphqlRequest(server, BUSINESS_QUERY, { sbi: '123456789' })
     const { info } = JSON.parse(response.payload).data.business
 
     expect(info.name).toBe(dalResponses.business.info.name)
@@ -100,13 +100,13 @@ describe('business query', () => {
   test('sends the query to the DAL with the service token and external gateway header', async () => {
     const fetchMock = mockDal({ business: dalResponses.business })
 
-    await graphqlRequest(server, BUSINESS_QUERY, { sbi: '107183280' })
+    await graphqlRequest(server, BUSINESS_QUERY, { sbi: '123456789' })
 
     const [endpoint, options] = fetchMock.mock.calls[0]
     expect(endpoint).toBe('http://localhost:3000/graphql')
     expect(options.headers.Authorization).toBe('Bearer a-service-token')
     expect(options.headers['gateway-type']).toBe('external')
-    expect(JSON.parse(options.body).variables).toEqual({ sbi: '107183280' })
+    expect(JSON.parse(options.body).variables).toEqual({ sbi: '123456789' })
   })
 
   test('forwards the caller authorization header to the DAL', async () => {
@@ -115,7 +115,7 @@ describe('business query', () => {
     await graphqlRequest(
       server,
       BUSINESS_QUERY,
-      { sbi: '107183280' },
+      { sbi: '123456789' },
       { 'x-forwarded-authorization': 'Bearer a-caller-token' }
     )
 
@@ -137,7 +137,7 @@ describe('business query', () => {
   test('returns null when the DAL has no matching business', async () => {
     mockDal({ business: null })
 
-    const response = await graphqlRequest(server, BUSINESS_QUERY, { sbi: '107183280' })
+    const response = await graphqlRequest(server, BUSINESS_QUERY, { sbi: '123456789' })
 
     expect(JSON.parse(response.payload).data.business).toBeNull()
   })
@@ -145,7 +145,7 @@ describe('business query', () => {
   test('reports a DAL failure as an error', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('connect ECONNREFUSED')))
 
-    const response = await graphqlRequest(server, BUSINESS_QUERY, { sbi: '107183280' })
+    const response = await graphqlRequest(server, BUSINESS_QUERY, { sbi: '123456789' })
     const { errors } = JSON.parse(response.payload)
 
     expect(errors[0].extensions.code).toBe('DAL_UNAVAILABLE')
@@ -156,18 +156,18 @@ describe('permissions query', () => {
   test('returns the permission groups a customer holds for a business', async () => {
     mockDal({
       business: {
-        sbi: '107183280',
-        customer: { crn: '1102634220', permissionGroups: dalResponses.permissionGroups }
+        sbi: '123456789',
+        customer: { crn: '1234567890', permissionGroups: dalResponses.permissionGroups }
       }
     })
 
     const response = await graphqlRequest(server, PERMISSIONS_QUERY, {
-      sbi: '107183280',
-      crn: '1102634220'
+      sbi: '123456789',
+      crn: '1234567890'
     })
     const { customer } = JSON.parse(response.payload).data.business
 
-    expect(customer.crn).toBe('1102634220')
+    expect(customer.crn).toBe('1234567890')
     expect(customer.permissionGroups).toEqual(dalResponses.permissionGroups)
   })
 
@@ -175,7 +175,7 @@ describe('permissions query', () => {
     mockDal({ business: dalResponses.business })
 
     const response = await graphqlRequest(server, PERMISSIONS_QUERY, {
-      sbi: '107183280',
+      sbi: '123456789',
       crn: '123'
     })
 

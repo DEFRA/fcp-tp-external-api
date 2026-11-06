@@ -18,7 +18,7 @@ describe('mapBusiness', () => {
   })
 
   test('fills absent fields with null rather than omitting them', () => {
-    const result = mapBusiness({ sbi: '107183280', info: { name: 'A Farm' } })
+    const result = mapBusiness({ sbi: '123456789', info: { name: 'A Farm' } })
 
     expect(result.organisationId).toBeNull()
     expect(result.info.vat).toBeNull()
@@ -30,7 +30,7 @@ describe('mapBusiness', () => {
 
   test('fills absent nested fields with null when the parent object is present', () => {
     const result = mapBusiness({
-      sbi: '107183280',
+      sbi: '123456789',
       info: { legalStatus: {}, type: {}, email: {}, phone: {} }
     })
 
@@ -43,7 +43,7 @@ describe('mapBusiness', () => {
 
   test('maps county parish holdings', () => {
     const result = mapBusiness({
-      sbi: '107183280',
+      sbi: '123456789',
       countyParishHoldings: [{ cphNumber: '10/123/4567' }]
     })
 
@@ -51,7 +51,7 @@ describe('mapBusiness', () => {
   })
 
   test('fills a missing cph number with null', () => {
-    const result = mapBusiness({ sbi: '107183280', countyParishHoldings: [{}] })
+    const result = mapBusiness({ sbi: '123456789', countyParishHoldings: [{}] })
 
     expect(result.countyParishHoldings).toEqual([{ cphNumber: null }])
   })
@@ -59,10 +59,10 @@ describe('mapBusiness', () => {
   test('maps a fully populated business', () => {
     const result = mapBusiness({
       organisationId: '5565448',
-      sbi: '107183280',
+      sbi: '123456789',
       info: {
         name: 'Henderson Family Farms',
-        vat: '123456789',
+        vat: '987654321',
         traderNumber: '010203040506',
         vendorNumber: '694523',
         legalStatus: { code: '102111', type: 'Sole Proprietorship' },
@@ -81,9 +81,9 @@ describe('mapBusiness', () => {
   })
 
   test('passes the mapped business through the sanitizer', () => {
-    mapBusiness({ sbi: '107183280' })
+    mapBusiness({ sbi: '123456789' })
 
-    expect(sanitize).toHaveBeenCalledWith(expect.objectContaining({ sbi: '107183280' }), 'Business')
+    expect(sanitize).toHaveBeenCalledWith(expect.objectContaining({ sbi: '123456789' }), 'Business')
   })
 })
 
@@ -97,24 +97,24 @@ describe('mapCustomer', () => {
   })
 
   test('fills absent info with null', () => {
-    expect(mapCustomer({ crn: '1102634220' }).info).toBeNull()
+    expect(mapCustomer({ crn: '1234567890' }).info).toBeNull()
   })
 
   test('fills absent name with null', () => {
-    const result = mapCustomer({ crn: '1102634220', info: { dateOfBirth: '1972-04-17' } })
+    const result = mapCustomer({ crn: '1234567890', info: { dateOfBirth: '1972-04-17' } })
 
     expect(result.info.name).toBeNull()
   })
 
   test('fills absent name parts with null', () => {
-    const result = mapCustomer({ crn: '1102634220', info: { name: { middle: 'Alan' } } })
+    const result = mapCustomer({ crn: '1234567890', info: { name: { middle: 'Alan' } } })
 
     expect(result.info.name).toEqual({ first: null, middle: 'Alan', last: null })
   })
 
   test('maps the customer name', () => {
     const result = mapCustomer({
-      crn: '1102634220',
+      crn: '1234567890',
       info: { name: { first: 'James', last: 'Henderson' } }
     })
 
@@ -123,7 +123,7 @@ describe('mapCustomer', () => {
 
   test('maps a fully populated customer', () => {
     const result = mapCustomer({
-      crn: '1102634220',
+      crn: '1234567890',
       info: {
         name: { first: 'James', middle: 'Alan', last: 'Henderson' },
         dateOfBirth: '1972-04-17',
@@ -140,9 +140,9 @@ describe('mapCustomer', () => {
   })
 
   test('passes the mapped customer through the sanitizer', () => {
-    mapCustomer({ crn: '1102634220' })
+    mapCustomer({ crn: '1234567890' })
 
-    expect(sanitize).toHaveBeenCalledWith(expect.objectContaining({ crn: '1102634220' }), 'Customer')
+    expect(sanitize).toHaveBeenCalledWith(expect.objectContaining({ crn: '1234567890' }), 'Customer')
   })
 })
 

@@ -20,19 +20,19 @@ describe('rememberUpdate', () => {
   })
 
   test('does nothing when the fragment is empty', async () => {
-    await rememberUpdate('Business', '107183280', null)
+    await rememberUpdate('Business', '123456789', null)
 
     expect(cacheSet).not.toHaveBeenCalled()
   })
 
   test('merges onto any existing cached fragment and stores it with the configured TTL', async () => {
-    cacheGet.mockResolvedValue({ info: { vat: '123456789' } })
+    cacheGet.mockResolvedValue({ info: { vat: '987654321' } })
 
-    await rememberUpdate('Business', '107183280', { info: { email: { address: 'new@example.com' } } })
+    await rememberUpdate('Business', '123456789', { info: { email: { address: 'new@example.com' } } })
 
     expect(cacheSet).toHaveBeenCalledWith(
-      'Business:107183280',
-      { info: { vat: '123456789', email: { address: 'new@example.com' } } },
+      'Business:123456789',
+      { info: { vat: '987654321', email: { address: 'new@example.com' } } },
       15 * 60 * 1000
     )
   })
@@ -40,7 +40,7 @@ describe('rememberUpdate', () => {
   test('swallows cache failures rather than throwing', async () => {
     cacheSet.mockRejectedValue(new Error('cache is unavailable'))
 
-    await expect(rememberUpdate('Business', '107183280', { info: { vat: '123456789' } })).resolves.toBeUndefined()
+    await expect(rememberUpdate('Business', '123456789', { info: { vat: '987654321' } })).resolves.toBeUndefined()
   })
 
   test('does nothing when the feature flag is disabled', async () => {
@@ -48,7 +48,7 @@ describe('rememberUpdate', () => {
     vi.stubEnv('UPDATE_ECHO_ENABLED', 'false')
 
     const { rememberUpdate: rememberUpdateDisabled } = await import('../../../src/update-echo/index.js')
-    await rememberUpdateDisabled('Business', '107183280', { info: { vat: '123456789' } })
+    await rememberUpdateDisabled('Business', '123456789', { info: { vat: '987654321' } })
 
     expect(cacheSet).not.toHaveBeenCalled()
 
@@ -61,7 +61,7 @@ describe('rememberUpdate', () => {
     vi.stubEnv('SANITIZE_DATA', 'false')
 
     const { rememberUpdate: rememberUpdateUnsanitized } = await import('../../../src/update-echo/index.js')
-    await rememberUpdateUnsanitized('Business', '107183280', { info: { vat: '123456789' } })
+    await rememberUpdateUnsanitized('Business', '123456789', { info: { vat: '987654321' } })
 
     expect(cacheSet).not.toHaveBeenCalled()
 
@@ -77,32 +77,32 @@ describe('applyRecentUpdate', () => {
   })
 
   test('returns the entity unchanged when nothing is cached', async () => {
-    const entity = { sbi: '107183280', info: { vat: 'FAKE1' } }
+    const entity = { sbi: '123456789', info: { vat: 'FAKE1' } }
 
-    expect(await applyRecentUpdate('Business', '107183280', entity)).toBe(entity)
+    expect(await applyRecentUpdate('Business', '123456789', entity)).toBe(entity)
   })
 
   test('returns null entities unchanged without touching the cache', async () => {
-    expect(await applyRecentUpdate('Business', '107183280', null)).toBeNull()
+    expect(await applyRecentUpdate('Business', '123456789', null)).toBeNull()
     expect(cacheGet).not.toHaveBeenCalled()
   })
 
   test('overlays a cached fragment onto the entity', async () => {
-    cacheGet.mockResolvedValue({ info: { vat: '123456789' } })
+    cacheGet.mockResolvedValue({ info: { vat: '987654321' } })
 
-    const entity = { sbi: '107183280', info: { vat: 'FAKE1', email: { address: 'fake@example.com' } } }
+    const entity = { sbi: '123456789', info: { vat: 'FAKE1', email: { address: 'fake@example.com' } } }
 
-    expect(await applyRecentUpdate('Business', '107183280', entity)).toEqual({
-      sbi: '107183280',
-      info: { vat: '123456789', email: { address: 'fake@example.com' } }
+    expect(await applyRecentUpdate('Business', '123456789', entity)).toEqual({
+      sbi: '123456789',
+      info: { vat: '987654321', email: { address: 'fake@example.com' } }
     })
   })
 
   test('swallows cache failures and returns the entity unchanged', async () => {
     cacheGet.mockRejectedValue(new Error('cache is unavailable'))
-    const entity = { sbi: '107183280', info: { vat: 'FAKE1' } }
+    const entity = { sbi: '123456789', info: { vat: 'FAKE1' } }
 
-    expect(await applyRecentUpdate('Business', '107183280', entity)).toBe(entity)
+    expect(await applyRecentUpdate('Business', '123456789', entity)).toBe(entity)
   })
 
   test('does nothing when the feature flag is disabled', async () => {
@@ -110,9 +110,9 @@ describe('applyRecentUpdate', () => {
     vi.stubEnv('UPDATE_ECHO_ENABLED', 'false')
 
     const { applyRecentUpdate: applyRecentUpdateDisabled } = await import('../../../src/update-echo/index.js')
-    const entity = { sbi: '107183280', info: { vat: 'FAKE1' } }
+    const entity = { sbi: '123456789', info: { vat: 'FAKE1' } }
 
-    expect(await applyRecentUpdateDisabled('Business', '107183280', entity)).toBe(entity)
+    expect(await applyRecentUpdateDisabled('Business', '123456789', entity)).toBe(entity)
     expect(cacheGet).not.toHaveBeenCalled()
 
     vi.unstubAllEnvs()

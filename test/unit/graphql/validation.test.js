@@ -3,10 +3,10 @@ import { assertValidSbi, assertValidCrn } from '../../../src/graphql/validation.
 
 describe('assertValidSbi', () => {
   test('accepts a nine digit identifier', () => {
-    expect(() => assertValidSbi('107183280')).not.toThrow()
+    expect(() => assertValidSbi('123456789')).not.toThrow()
   })
 
-  test.each(['0071832801', '10718328', '1071832801', 'not-an-sbi', '007183280'])(
+  test.each(['0123456789', '12345678', '1234567890', 'not-an-sbi', '012345678'])(
     'rejects %s',
     (sbi) => {
       expect(() => assertValidSbi(sbi)).toThrow('sbi is not valid')
@@ -16,10 +16,10 @@ describe('assertValidSbi', () => {
 
 describe('assertValidCrn', () => {
   test('accepts a ten digit reference number', () => {
-    expect(() => assertValidCrn('1102634220')).not.toThrow()
+    expect(() => assertValidCrn('1234567890')).not.toThrow()
   })
 
-  test.each(['110263422', '11026342201', '0102634220', 'not-a-crn'])(
+  test.each(['123456789', '12345678901', '0123456789', 'not-a-crn'])(
     'rejects %s',
     (crn) => {
       expect(() => assertValidCrn(crn)).toThrow('crn is not valid')

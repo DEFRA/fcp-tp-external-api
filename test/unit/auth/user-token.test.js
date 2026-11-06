@@ -24,15 +24,15 @@ describe('getUserToken', () => {
 
 describe('getTokenCrn', () => {
   test('returns the contactId claim', () => {
-    expect(getTokenCrn(jwt({ contactId: '1102634220' }))).toBe('1102634220')
+    expect(getTokenCrn(jwt({ contactId: '1234567890' }))).toBe('1234567890')
   })
 
   test('accepts a Bearer prefix', () => {
-    expect(getTokenCrn(`Bearer ${jwt({ contactId: '1102634220' })}`)).toBe('1102634220')
+    expect(getTokenCrn(`Bearer ${jwt({ contactId: '1234567890' })}`)).toBe('1234567890')
   })
 
   test('converts a numeric contactId to a string', () => {
-    expect(getTokenCrn(jwt({ contactId: 1102634220 }))).toBe('1102634220')
+    expect(getTokenCrn(jwt({ contactId: 1234567890 }))).toBe('1234567890')
   })
 
   test('returns null when there is no contactId', () => {
@@ -40,7 +40,7 @@ describe('getTokenCrn', () => {
   })
 
   test('returns null when contactId is not a string or number', () => {
-    expect(getTokenCrn(jwt({ contactId: { crn: '1102634220' } }))).toBeNull()
+    expect(getTokenCrn(jwt({ contactId: { crn: '1234567890' } }))).toBeNull()
   })
 
   test.each([

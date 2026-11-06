@@ -37,7 +37,7 @@ describe('updateCustomerAllFields mutation', () => {
       updateCustomerAllFields: { success: true }
     })
 
-    const input = { crn: '1102634220', first: 'James', last: 'Henderson' }
+    const input = { crn: '1234567890', first: 'James', last: 'Henderson' }
     const response = await graphqlRequest(server, UPDATE_CUSTOMER_MUTATION, { input })
     const { data, errors } = JSON.parse(response.payload)
 

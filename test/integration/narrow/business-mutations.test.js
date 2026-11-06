@@ -37,7 +37,7 @@ describe('updateBusinessAllFields mutation', () => {
       updateBusinessAllFields: { success: true }
     })
 
-    const input = { sbi: '107183280', name: 'Henderson Family Farms', vat: '123456789' }
+    const input = { sbi: '123456789', name: 'Henderson Family Farms', vat: '987654321' }
     const response = await graphqlRequest(server, UPDATE_BUSINESS_MUTATION, { input })
     const { data, errors } = JSON.parse(response.payload)
 

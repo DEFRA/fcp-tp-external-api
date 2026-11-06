@@ -41,18 +41,18 @@ describe('customer query', () => {
   test('returns the customer for a valid crn', async () => {
     mockDal({ customer: dalResponses.customer })
 
-    const response = await graphqlRequest(server, CUSTOMER_QUERY, { crn: '1102634220' })
+    const response = await graphqlRequest(server, CUSTOMER_QUERY, { crn: '1234567890' })
     const { data, errors } = JSON.parse(response.payload)
 
     expect(response.statusCode).toBe(200)
     expect(errors).toBeUndefined()
-    expect(data.customer.crn).toBe('1102634220')
+    expect(data.customer.crn).toBe('1234567890')
   })
 
   test('substitutes personal data before returning it', async () => {
     mockDal({ customer: dalResponses.customer })
 
-    const response = await graphqlRequest(server, CUSTOMER_QUERY, { crn: '1102634220' })
+    const response = await graphqlRequest(server, CUSTOMER_QUERY, { crn: '1234567890' })
     const { info } = JSON.parse(response.payload).data.customer
 
     expect(info.name.first).not.toBe(dalResponses.customer.info.name.first)
@@ -63,10 +63,10 @@ describe('customer query', () => {
 
   test('substitutes a value the same way every time it is requested', async () => {
     mockDal({ customer: dalResponses.customer })
-    const first = await graphqlRequest(server, CUSTOMER_QUERY, { crn: '1102634220' })
+    const first = await graphqlRequest(server, CUSTOMER_QUERY, { crn: '1234567890' })
 
     mockDal({ customer: dalResponses.customer })
-    const second = await graphqlRequest(server, CUSTOMER_QUERY, { crn: '1102634220' })
+    const second = await graphqlRequest(server, CUSTOMER_QUERY, { crn: '1234567890' })
 
     expect(JSON.parse(first.payload)).toEqual(JSON.parse(second.payload))
   })
@@ -84,7 +84,7 @@ describe('customer query', () => {
   test('returns null when the DAL has no matching customer', async () => {
     mockDal({ customer: null })
 
-    const response = await graphqlRequest(server, CUSTOMER_QUERY, { crn: '1102634220' })
+    const response = await graphqlRequest(server, CUSTOMER_QUERY, { crn: '1234567890' })
 
     expect(JSON.parse(response.payload).data.customer).toBeNull()
   })

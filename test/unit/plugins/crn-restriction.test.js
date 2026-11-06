@@ -9,8 +9,8 @@ vi.mock('../../../src/common/helpers/logging/logger.js', () => ({
   createLogger: () => mockLogger
 }))
 
-const ALLOWED_CRN = '1102634220'
-const OTHER_CRN = '1111111902'
+const ALLOWED_CRN = '1000000001'
+const OTHER_CRN = '1000000002'
 
 function jwt (payload) {
   const encode = (value) => Buffer.from(JSON.stringify(value)).toString('base64url')
@@ -151,7 +151,7 @@ describe('crn restriction', () => {
       expect(mockLogger.warn).toHaveBeenCalledWith(
         {
           event: { action: 'crn-restriction', outcome: 'failure', reason: 'not-allowed' },
-          user: { id: '******1902' }
+          user: { id: '******0002' }
         },
         'Request refused by CRN restriction'
       )

@@ -20,29 +20,29 @@ describe('getBusiness', () => {
 
   test('overlays any recently echoed update onto the mapped business', async () => {
     queryDal.mockResolvedValue({
-      business: { organisationId: '5565448', sbi: '107183280', info: { vat: 'FAKE1' } }
+      business: { organisationId: '5565448', sbi: '123456789', info: { vat: 'FAKE1' } }
     })
-    applyRecentUpdate.mockResolvedValue({ sbi: '107183280', info: { vat: '123456789' } })
+    applyRecentUpdate.mockResolvedValue({ sbi: '123456789', info: { vat: '987654321' } })
 
-    const result = await getBusiness('107183280')
+    const result = await getBusiness('123456789')
 
     expect(applyRecentUpdate).toHaveBeenCalledWith(
       'Business',
-      '107183280',
-      expect.objectContaining({ sbi: '107183280' })
+      '123456789',
+      expect.objectContaining({ sbi: '123456789' })
     )
-    expect(result).toEqual({ sbi: '107183280', info: { vat: '123456789' } })
+    expect(result).toEqual({ sbi: '123456789', info: { vat: '987654321' } })
   })
 
   test('forwards the sbi and caller token to the DAL', async () => {
     queryDal.mockResolvedValue({})
     applyRecentUpdate.mockResolvedValue(null)
 
-    await getBusiness('107183280', { forwardedUserToken: 'Bearer a-token' })
+    await getBusiness('123456789', { forwardedUserToken: 'Bearer a-token' })
 
     expect(queryDal).toHaveBeenCalledWith(
       expect.any(String),
-      { sbi: '107183280' },
+      { sbi: '123456789' },
       { forwardedUserToken: 'Bearer a-token' }
     )
   })

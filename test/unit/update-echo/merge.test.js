@@ -3,33 +3,33 @@ import { mergeFragment } from '../../../src/update-echo/merge.js'
 
 describe('mergeFragment', () => {
   test('returns the entity unchanged when there is no fragment', () => {
-    const entity = { sbi: '107183280', info: { vat: '123456789' } }
+    const entity = { sbi: '123456789', info: { vat: '987654321' } }
 
     expect(mergeFragment(entity, null)).toBe(entity)
     expect(mergeFragment(entity, {})).toBe(entity)
   })
 
   test('returns the entity unchanged when it is null', () => {
-    expect(mergeFragment(null, { info: { vat: '123456789' } })).toBeNull()
+    expect(mergeFragment(null, { info: { vat: '987654321' } })).toBeNull()
   })
 
   test('overlays only the keys present in the fragment', () => {
-    const entity = { sbi: '107183280', info: { vat: 'FAKE1', email: { address: 'fake@example.com' } } }
-    const fragment = { info: { vat: '123456789' } }
+    const entity = { sbi: '123456789', info: { vat: 'FAKE1', email: { address: 'fake@example.com' } } }
+    const fragment = { info: { vat: '987654321' } }
 
     expect(mergeFragment(entity, fragment)).toEqual({
-      sbi: '107183280',
-      info: { vat: '123456789', email: { address: 'fake@example.com' } }
+      sbi: '123456789',
+      info: { vat: '987654321', email: { address: 'fake@example.com' } }
     })
   })
 
   test('creates missing intermediate objects', () => {
-    const entity = { sbi: '107183280', info: null }
-    const fragment = { info: { vat: '123456789' } }
+    const entity = { sbi: '123456789', info: null }
+    const fragment = { info: { vat: '987654321' } }
 
     expect(mergeFragment(entity, fragment)).toEqual({
-      sbi: '107183280',
-      info: { vat: '123456789' }
+      sbi: '123456789',
+      info: { vat: '987654321' }
     })
   })
 
@@ -42,9 +42,9 @@ describe('mergeFragment', () => {
 
   test('accumulates across successive merges', () => {
     const entity = { info: { vat: 'FAKE1', address: { city: 'Fakeville' } } }
-    const first = mergeFragment(entity, { info: { vat: '123456789' } })
+    const first = mergeFragment(entity, { info: { vat: '987654321' } })
     const second = mergeFragment(first, { info: { address: { city: 'Leeds' } } })
 
-    expect(second).toEqual({ info: { vat: '123456789', address: { city: 'Leeds' } } })
+    expect(second).toEqual({ info: { vat: '987654321', address: { city: 'Leeds' } } })
   })
 })

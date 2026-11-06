@@ -41,11 +41,11 @@ describe('config', () => {
     })
 
     test('parses ALLOWED_CRNS as a comma separated list, ignoring spaces and blank entries', async () => {
-      vi.stubEnv('ALLOWED_CRNS', ' 1102634220, 1111111902 ,,')
+      vi.stubEnv('ALLOWED_CRNS', ' 1000000001, 1000000002 ,,')
 
       const { config } = await import('../../src/config.js')
 
-      expect(config.get('crnRestriction.allowedCrns')).toEqual(['1102634220', '1111111902'])
+      expect(config.get('crnRestriction.allowedCrns')).toEqual(['1000000001', '1000000002'])
     })
 
     test('treats a blank ALLOWED_CRNS as an empty list', async () => {
@@ -58,21 +58,21 @@ describe('config', () => {
 
     test.each([
       ['too short', '12345'],
-      ['too long', '11026342201'],
-      ['not numeric', '11026342AB'],
-      ['starting with zero', '0102634220']
+      ['too long', '10000000011'],
+      ['not numeric', '10000000AB'],
+      ['starting with zero', '0123456789']
     ])('stops startup when ALLOWED_CRNS contains a CRN that is %s', async (_name, crn) => {
-      vi.stubEnv('ALLOWED_CRNS', `1102634220,${crn}`)
+      vi.stubEnv('ALLOWED_CRNS', `1000000001,${crn}`)
 
       await expect(import('../../src/config.js')).rejects.toThrow('crnRestriction.allowedCrns')
     })
 
     test('does not print the allowed CRNs in the config string', async () => {
-      vi.stubEnv('ALLOWED_CRNS', '1102634220')
+      vi.stubEnv('ALLOWED_CRNS', '1000000001')
 
       const { config } = await import('../../src/config.js')
 
-      expect(config.toString()).not.toContain('1102634220')
+      expect(config.toString()).not.toContain('1000000001')
     })
   })
 })
