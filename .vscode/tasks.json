@@ -3,7 +3,7 @@
   "tasks": [
     {
       "label": "Services: Up",
-      "detail": "Start the local DAL stack (fcp-dal-api, upstream-mock, mongodb)",
+      "detail": "Start the local DAL stack (fcp-dal-api, dal-mock, mongodb)",
       "type": "npm",
       "script": "services:up",
       "isBackground": true,
