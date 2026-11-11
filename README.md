@@ -220,7 +220,7 @@ Which fields are substituted is declared per type in `src/sanitizer/rules.js`.
 (including UPRN), email addresses, phone numbers, customer names, and date of birth. Trader and
 vendor numbers become six digits and CPH numbers keep the `CC/PPP/HHHH` shape. The DAL documents
 the CPH format but defines none for trader and vendor numbers, so six digits is borrowed from the
-upstream mock's data.
+mock's data.
 
 **Preserved:** identifiers and reference data, because they are what make the response usable.
 That means SBI, CRN, organisation ID, business name, permission group IDs and levels, and legal
@@ -383,7 +383,7 @@ npm run services:down   # Stop the dependency containers
 | Service | Port | Purpose |
 | --- | --- | --- |
 | `fcp-dal-api` | 3005 (3000 in-container) | The DAL this service calls |
-| `upstream-mock` | 3100 | Stubs the KITS and Hitachi services the DAL calls |
+| `dal-mock` | 3100 | [fcp-dal-upstream-services-mock](https://github.com/DEFRA/fcp-dal-upstream-services-mock), which stubs the KITS and Hitachi services the DAL calls |
 | `mongodb` | 27017 | The DAL's database |
 | `fcp-tp-external-api` | 3001 | This service. Only under the `app` profile |
 
