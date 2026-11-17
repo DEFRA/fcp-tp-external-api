@@ -175,7 +175,7 @@ Failures upstream surface as GraphQL errors with a code in `extensions.code`:
 
 | Code | Meaning |
 | --- | --- |
-| `BAD_USER_INPUT` | The SBI or CRN was not a valid identifier |
+| `BAD_USER_INPUT` | The SBI or CRN was not a valid identifier, or an address field was blank or too long |
 | `DAL_UNAVAILABLE` | The DAL could not be reached, or the request timed out |
 | `DAL_REQUEST_REJECTED` | The DAL returned a non-success status. `extensions.status` has it |
 | *(passed through)* | The DAL returned a GraphQL error; its own code is preserved |
@@ -240,8 +240,20 @@ does. Blank values come back as null, and `line5` is never returned.
 `updateCustomerAllFields` takes an `address`, and `updateBusinessAllFields` takes an `address`
 and a `correspondenceAddress`. All three are an `AddressInput` in the shape above, and each one
 replaces the whole stored address: leaving an optional field out clears it. Blank optional
-fields are saved as null. A blank required field is rejected with `BAD_USER_INPUT` before the DAL
-is called.
+fields are saved as null.
+
+Before the DAL is called, an address is checked against the limits Rural Payments applies when
+it saves one (`PartyAddress.java` and `PostCodeValidator.java` in Rural Payments' `capd-services`).
+A blank required field, or one over its limit, is rejected with `BAD_USER_INPUT`. Otherwise
+Rural Payments would reject the whole update and the caller would only see `DAL_REQUEST_REJECTED`.
+
+| Field | Maximum length |
+| --- | --- |
+| `line1`, `line2`, `line3` | 240 |
+| `city`, `county` | 60 |
+| `country` | 100 |
+| `postalCode` | 8, not counting spaces |
+| `uprn` | 12 |
 
 Send `uprn` only when the address was chosen from a postcode lookup and has not been edited
 since. Leave it out for an address a user typed in, or changed after choosing it.
@@ -286,11 +298,25 @@ mutation UpdateCustomerAllFields($input: UpdateCustomerAllFieldsInput!) {
 ### Trade-offs
 
 - **Lookup structure is flattened.** A lookup address saved through this API keeps its UPRN but
-  not its finer structure: an organisation, flat and building name all land in `buildingName`, and
-  a building number in `street`. It still displays the same here and in Defra's own services, which
-  flatten lookup addresses in the same way.
+  not its finer structure: an organisation, flat and building name all land in `buildingName`, a
+  building number in `street` alongside the street name, and the localities in
+  `dependentLocality`. This has been checked against the Rural Payments source:
+  - **It passes validation.** With a UPRN, Rural Payments only requires the UPRN, and these
+    fields are within its 240 character limit (see the limits above).
+  - **It displays the same.** The Rural Payments portal (`capdAddressFormatter.js`) and Defra's
+    own services both show a lookup address as organisation, flat, building, building number and
+    street, then localities, so the address reads the same as the caller entered it.
+  - **Duplicate matching is slightly weaker.** When Rural Payments finds a possible duplicate
+    business it lists the fields that matched, including `street`
+    (`OrganisationDuplicateHelper.java`). A street saved here includes the building number, so
+    it won't match a genuine lookup's street. UPRN and postcode still match, and a manually
+    entered address has no street at all.
+
+  The checks used a snapshot of the Rural Payments code (Release 6), so anything changed since,
+  or applied in the gateway between the DAL and Rural Payments, is not covered.
 - **`line5` is dropped.** Defra's own services do not use it either.
-- **The UPRN is trusted.** The API does not check that a UPRN matches the address sent with it.
+- **The UPRN is trusted.** Neither this API nor Rural Payments checks that a UPRN matches the
+  address sent with it. Both are stored as given.
 - **Editing makes an address manual.** A lookup address that is edited and saved without its UPRN
   becomes a manual address, as it would in Defra's own services.
 

@@ -45,4 +45,28 @@ describe('assertValidAddress', () => {
       expect(() => assertValidAddress({ ...address, [field]: '  ' }, 'address')).toThrow(`address.${field} must not be blank`)
     }
   )
+
+  test.each([
+    ['line1', 240],
+    ['line2', 240],
+    ['line3', 240],
+    ['city', 60],
+    ['county', 60],
+    ['country', 100],
+    ['uprn', 12]
+  ])('accepts %s at %i characters and rejects it above', (field, max) => {
+    expect(() => assertValidAddress({ ...address, [field]: 'a'.repeat(max) }, 'address')).not.toThrow()
+    expect(() => assertValidAddress({ ...address, [field]: 'a'.repeat(max + 1) }, 'address'))
+      .toThrow(`address.${field} must be ${max} characters or fewer`)
+  })
+
+  test('ignores surrounding whitespace when checking a length', () => {
+    expect(() => assertValidAddress({ ...address, city: ` ${'a'.repeat(60)} ` }, 'address')).not.toThrow()
+  })
+
+  test('ignores spaces when checking the postcode length', () => {
+    expect(() => assertValidAddress({ ...address, postalCode: 'AB12 3CDE' }, 'address')).not.toThrow()
+    expect(() => assertValidAddress({ ...address, postalCode: 'AB12 3CDEF' }, 'address'))
+      .toThrow('address.postalCode must be 8 characters or fewer, not counting spaces')
+  })
 })

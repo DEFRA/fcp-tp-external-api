@@ -21,7 +21,26 @@ export function assertValidCrn (crn) {
 
 const REQUIRED_ADDRESS_FIELDS = ['line1', 'city', 'postalCode', 'country']
 
-// The schema makes these non-null, but a blank string would still reach the DAL as null
+// Rural Payments' limits (PartyAddress.java), checked here so callers get a clear error rather than a DAL rejection
+const ADDRESS_FIELD_MAX_LENGTHS = {
+  line1: 240,
+  line2: 240,
+  line3: 240,
+  city: 60,
+  county: 60,
+  country: 100,
+  uprn: 12
+}
+
+const POSTCODE_MAX_LENGTH = 8
+
+function addressError (message, argumentName) {
+  return new GraphQLError(message, {
+    extensions: { code: 'BAD_USER_INPUT', argumentName }
+  })
+}
+
+// The schema makes the required fields non-null, but a blank string would still reach the DAL as null
 export function assertValidAddress (address, name) {
   if (!address) {
     return
@@ -29,9 +48,18 @@ export function assertValidAddress (address, name) {
 
   for (const field of REQUIRED_ADDRESS_FIELDS) {
     if (!address[field]?.trim()) {
-      throw new GraphQLError(`${name}.${field} must not be blank`, {
-        extensions: { code: 'BAD_USER_INPUT', argumentName: `${name}.${field}` }
-      })
+      throw addressError(`${name}.${field} must not be blank`, `${name}.${field}`)
     }
+  }
+
+  for (const [field, max] of Object.entries(ADDRESS_FIELD_MAX_LENGTHS)) {
+    if ((address[field]?.trim().length ?? 0) > max) {
+      throw addressError(`${name}.${field} must be ${max} characters or fewer`, `${name}.${field}`)
+    }
+  }
+
+  // Rural Payments ignores spaces when checking a postcode's length
+  if (address.postalCode.replaceAll(' ', '').length > POSTCODE_MAX_LENGTH) {
+    throw addressError(`${name}.postalCode must be ${POSTCODE_MAX_LENGTH} characters or fewer, not counting spaces`, `${name}.postalCode`)
   }
 }
