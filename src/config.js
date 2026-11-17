@@ -160,24 +160,28 @@ export const config = convict({
     tenantId: {
       doc: 'Unique ID of the Entra tenant issuing our machine-to-machine token',
       format: String,
+      nullable: true,
       default: null,
       env: 'DAL_TENANT_ID'
     },
     tokenEndpoint: {
       doc: 'Entra token endpoint used to obtain a machine-to-machine token',
       format: String,
+      nullable: true,
       default: null,
       env: 'DAL_TOKEN_ENDPOINT'
     },
     clientId: {
       doc: 'Entra client ID of this service',
       format: String,
+      nullable: true,
       default: null,
       env: 'DAL_CLIENT_ID'
     },
     clientSecret: {
       doc: 'Entra client secret of this service',
       format: String,
+      nullable: true,
       default: null,
       env: 'DAL_CLIENT_SECRET',
       sensitive: true
@@ -243,3 +247,12 @@ export const config = convict({
 })
 
 config.validate({ allowed: 'strict' })
+
+if (!config.get('dal.disableAuth')) {
+  const missing = ['tenantId', 'tokenEndpoint', 'clientId', 'clientSecret']
+    .filter((key) => !config.get(`dal.${key}`))
+    .map((key) => `dal.${key}`)
+  if (missing.length) {
+    throw new Error(`${missing.join(', ')}: must be set unless DAL_DISABLE_AUTH is true`)
+  }
+}

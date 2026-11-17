@@ -421,10 +421,10 @@ run misconfigured. See `src/config.js`, and `.env.example` for a working local s
 | `DAL_ENDPOINT` | yes | | GraphQL endpoint of the DAL |
 | `DAL_GATEWAY_TYPE` | | `external` | DAL gateway to route through. `external` or `internal` |
 | `DAL_REQUEST_TIMEOUT_MS` | | `15000` | Timeout on outbound DAL requests |
-| `DAL_TENANT_ID` | yes | | Entra tenant ID |
-| `DAL_TOKEN_ENDPOINT` | yes | | Entra token endpoint |
-| `DAL_CLIENT_ID` | yes | | Entra client ID of this service |
-| `DAL_CLIENT_SECRET` | yes | | Entra client secret of this service |
+| `DAL_TENANT_ID` | yes, unless `DAL_DISABLE_AUTH=true` | | Entra tenant ID |
+| `DAL_TOKEN_ENDPOINT` | yes, unless `DAL_DISABLE_AUTH=true` | | Entra token endpoint |
+| `DAL_CLIENT_ID` | yes, unless `DAL_DISABLE_AUTH=true` | | Entra client ID of this service |
+| `DAL_CLIENT_SECRET` | yes, unless `DAL_DISABLE_AUTH=true` | | Entra client secret of this service |
 | `SANITIZE_DATA` | | `true` | Substitute business and personal data before responding |
 | `SANITIZE_SECRET` | yes, when sanitizing | | Secret keying the substitution |
 | `UPDATE_ECHO_ENABLED` | | `true` | Echo a caller's own recent updates back past the sanitizer |

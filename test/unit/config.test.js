@@ -21,6 +21,30 @@ describe('config', () => {
     vi.unstubAllEnvs()
   })
 
+  describe('Entra credentials', () => {
+    test('are optional when DAL auth is disabled', async () => {
+      vi.stubEnv('DAL_DISABLE_AUTH', 'true')
+      vi.stubEnv('DAL_TENANT_ID', undefined)
+      vi.stubEnv('DAL_TOKEN_ENDPOINT', undefined)
+      vi.stubEnv('DAL_CLIENT_ID', undefined)
+      vi.stubEnv('DAL_CLIENT_SECRET', undefined)
+
+      const { config } = await import('../../src/config.js')
+
+      expect(config.get('dal.clientId')).toBeNull()
+    })
+
+    test('stops startup when missing and DAL auth is enabled', async () => {
+      vi.stubEnv('DAL_DISABLE_AUTH', 'false')
+      vi.stubEnv('DAL_TOKEN_ENDPOINT', undefined)
+      vi.stubEnv('DAL_CLIENT_SECRET', '')
+
+      await expect(import('../../src/config.js')).rejects.toThrow(
+        'dal.tokenEndpoint, dal.clientSecret: must be set unless DAL_DISABLE_AUTH is true'
+      )
+    })
+  })
+
   describe('CRN restriction', () => {
     test('is enabled by default with an empty allow-list', async () => {
       vi.stubEnv('RESTRICT_CRNS', undefined)
