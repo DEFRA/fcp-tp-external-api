@@ -23,23 +23,27 @@ describe('projectBusinessUpdate', () => {
     })
   })
 
-  test('projects an address from whichever oneOf branch was submitted', () => {
+  test('projects a complete address in the shape a later read returns it', () => {
     const withUprn = projectBusinessUpdate({
       sbi: '123456789',
-      address: { withUprn: { line1: '1 New Street', city: 'Leeds', postalCode: 'LS1 1AA', country: 'UK', uprn: '123' } }
+      address: { line1: '1 New Street', city: 'Leeds', postalCode: 'LS1 1AA', country: 'UK', uprn: '123' }
     })
 
     expect(withUprn).toEqual({
-      info: { address: { line1: '1 New Street', city: 'Leeds', postalCode: 'LS1 1AA', country: 'UK', uprn: '123' } }
+      info: {
+        address: { line1: '1 New Street', line2: null, line3: null, city: 'Leeds', county: null, postalCode: 'LS1 1AA', country: 'UK', uprn: '123' }
+      }
     })
 
     const withoutUprn = projectBusinessUpdate({
       sbi: '123456789',
-      address: { withoutUprn: { line1: '2 New Street', city: 'Leeds', postalCode: 'LS1 1AB', country: 'UK' } }
+      address: { line1: '2 New Street', line2: '', line3: 'Headingley', city: 'Leeds', county: 'West Yorkshire', postalCode: 'LS1 1AB', country: 'UK' }
     })
 
     expect(withoutUprn).toEqual({
-      info: { address: { line1: '2 New Street', city: 'Leeds', postalCode: 'LS1 1AB', country: 'UK' } }
+      info: {
+        address: { line1: '2 New Street', line2: 'Headingley', line3: null, city: 'Leeds', county: 'West Yorkshire', postalCode: 'LS1 1AB', country: 'UK', uprn: null }
+      }
     })
   })
 
@@ -58,7 +62,7 @@ describe('projectBusinessUpdate', () => {
       dateStartedFarming: '2020-01-01',
       correspondenceEmail: { address: 'c@example.com' },
       correspondencePhone: { mobile: '07700900000' },
-      correspondenceAddress: { withoutUprn: { line1: '1 Road', city: 'Leeds', postalCode: 'LS1 1AA', country: 'UK' } },
+      correspondenceAddress: { line1: '1 Road', city: 'Leeds', postalCode: 'LS1 1AA', country: 'UK' },
       isCorrespondenceAsBusinessAddress: true,
       registrationNumbers: { charityCommission: '123', companiesHouse: '456' }
     }
@@ -90,7 +94,7 @@ describe('projectCustomerUpdate', () => {
         dateOfBirth: '1972-04-17',
         email: { address: 'jamie@example.com' },
         phone: { mobile: '07700900000', landline: null },
-        address: { line1: '1 New Street', city: 'Leeds', postalCode: 'LS1 1AA', country: 'UK' }
+        address: { line1: '1 New Street', line2: null, line3: null, city: 'Leeds', county: null, postalCode: 'LS1 1AA', country: 'UK', uprn: null }
       }
     })
   })

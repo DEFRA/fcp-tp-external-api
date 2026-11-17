@@ -75,7 +75,16 @@ describe('mapBusiness', () => {
 
     expect(result.info.legalStatus).toEqual({ code: '102111', type: 'Sole Proprietorship' })
     expect(result.info.type).toEqual({ code: '101443', type: 'Central Government' })
-    expect(result.info.address).toMatchObject({ line1: '14 Oakwood Drive', postalCode: 'S10 2GH', line2: null })
+    expect(result.info.address).toEqual({
+      line1: '14 Oakwood Drive',
+      line2: null,
+      line3: null,
+      city: null,
+      county: null,
+      postalCode: 'S10 2GH',
+      country: null,
+      uprn: null
+    })
     expect(result.info.email).toEqual({ address: 'james.henderson@mailbox.co.uk' })
     expect(result.info.phone).toEqual({ mobile: '07771234567', landline: '01144960123' })
   })

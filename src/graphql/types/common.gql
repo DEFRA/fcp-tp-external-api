@@ -1,20 +1,19 @@
+"""
+An address in display order. Lines are never left with gaps, so line2 is only set
+if line1 is, and line3 only if line2 is.
+"""
 type Address {
-  pafOrganisationName: String
-  buildingNumberRange: String
-  buildingName: String
-  flatName: String
-  street: String
+  line1: String
+  line2: String
+  line3: String
   city: String
   county: String
   postalCode: String
   country: String
-  dependentLocality: String
-  doubleDependentLocality: String
-  line1: String
-  line2: String
-  line3: String
-  line4: String
-  line5: String
+  """
+  Unique Property Reference Number. Set when the address was chosen from a
+  postcode lookup, null when it was entered manually.
+  """
   uprn: String
 }
 
@@ -42,74 +41,19 @@ input PhoneInput {
 }
 
 """
-A flat address input, used where the DAL does not distinguish between a
-postcode-lookup address and a manually entered one (e.g. customer addresses).
+A complete address, replacing the stored one. Blank optional fields are saved as null.
 """
 input AddressInput {
-  pafOrganisationName: String
-  buildingNumberRange: String
-  buildingName: String
-  flatName: String
-  street: String
-  city: String
-  county: String
-  postalCode: String
-  country: String
-  dependentLocality: String
-  doubleDependentLocality: String
-  line1: String
+  line1: String!
   line2: String
   line3: String
-  line4: String
-  line5: String
-  uprn: String
-}
-
-input AddressInputWithUprn {
-  pafOrganisationName: String
-  buildingNumberRange: String
-  buildingName: String
-  flatName: String
-  street: String
-  city: String
-  county: String
-  postalCode: String
-  country: String
-  dependentLocality: String
-  doubleDependentLocality: String
-  line1: String
-  line2: String
-  line3: String
-  line4: String
-  line5: String
-  uprn: String!
-}
-
-input AddressInputWithoutUprn {
-  pafOrganisationName: String
-  buildingNumberRange: String
-  buildingName: String
-  flatName: String
-  street: String
   city: String!
   county: String
   postalCode: String!
   country: String!
-  dependentLocality: String
-  doubleDependentLocality: String
-  line1: String!
-  line2: String
-  line3: String
-  line4: String
-  line5: String
+  """
+  Only set this when the address was chosen from a postcode lookup and has not
+  been edited since. Leave it out for an address entered manually.
+  """
   uprn: String
-}
-
-"""
-An address that is either identified by a UPRN (postcode lookup) or entered
-manually - exactly one of the two fields must be provided.
-"""
-input ValidAddressInput @oneOf {
-  withUprn: AddressInputWithUprn
-  withoutUprn: AddressInputWithoutUprn
 }

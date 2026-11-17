@@ -51,22 +51,13 @@ export const sanitizeRules = {
   },
   Address: {
     fields: {
-      pafOrganisationName: 'organisationName',
-      buildingNumberRange: 'buildingNumberRange',
-      buildingName: 'buildingName',
-      flatName: 'flatName',
-      street: 'street',
+      line1: 'addressLine',
+      line2: 'street',
+      line3: 'locality',
       city: 'city',
       county: 'county',
       postalCode: 'postcode',
       country: 'country',
-      dependentLocality: 'locality',
-      doubleDependentLocality: 'locality',
-      line1: 'addressLine',
-      line2: 'locality',
-      line3: 'city',
-      line4: 'county',
-      line5: 'postcode',
       uprn: 'uprn'
     }
   },

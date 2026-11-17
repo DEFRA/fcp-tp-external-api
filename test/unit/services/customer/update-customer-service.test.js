@@ -57,6 +57,25 @@ describe('updateCustomer', () => {
     expect(rememberUpdate).toHaveBeenCalledWith('Customer', '1234567890', { info: { name: { first: 'James' } } })
   })
 
+  test('sends the address to the DAL in its own shape', async () => {
+    queryDal.mockResolvedValue({ updateCustomerAllFields: { success: true } })
+
+    const address = { line1: '1 New Street', city: 'Leeds', county: 'West Yorkshire', postalCode: 'LS1 1AA', country: 'UK' }
+    await updateCustomer({ crn: '1234567890', address })
+
+    const [, { input }] = queryDal.mock.calls[0]
+    expect(input.address).toMatchObject({ line1: '1 New Street', line4: 'West Yorkshire', county: null, uprn: null })
+  })
+
+  test('passes an explicit null address through', async () => {
+    queryDal.mockResolvedValue({ updateCustomerAllFields: { success: true } })
+
+    await updateCustomer({ crn: '1234567890', address: null })
+
+    const [, { input }] = queryDal.mock.calls[0]
+    expect(input.address).toBeNull()
+  })
+
   test('does not remember an unsuccessful update', async () => {
     queryDal.mockResolvedValue({ updateCustomerAllFields: { success: false } })
 

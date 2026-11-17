@@ -1,32 +1,5 @@
 import { sanitize } from '../sanitizer/index.js'
-
-const ADDRESS_FIELDS = [
-  'pafOrganisationName',
-  'buildingNumberRange',
-  'buildingName',
-  'flatName',
-  'street',
-  'city',
-  'county',
-  'postalCode',
-  'country',
-  'dependentLocality',
-  'doubleDependentLocality',
-  'line1',
-  'line2',
-  'line3',
-  'line4',
-  'line5',
-  'uprn'
-]
-
-function mapAddress (address) {
-  if (!address) {
-    return null
-  }
-
-  return Object.fromEntries(ADDRESS_FIELDS.map((field) => [field, address[field] ?? null]))
-}
+import { fromDalAddress } from './address.js'
 
 function mapEmail (email) {
   return email ? { address: email.address ?? null } : null
@@ -60,7 +33,7 @@ export function mapBusiness (business) {
           vendorNumber: business.info.vendorNumber ?? null,
           legalStatus: mapCodeType(business.info.legalStatus),
           type: mapCodeType(business.info.type),
-          address: mapAddress(business.info.address),
+          address: fromDalAddress(business.info.address),
           email: mapEmail(business.info.email),
           phone: mapPhone(business.info.phone)
         }
@@ -90,7 +63,7 @@ export function mapCustomer (customer) {
               }
             : null,
           dateOfBirth: customer.info.dateOfBirth ?? null,
-          address: mapAddress(customer.info.address),
+          address: fromDalAddress(customer.info.address),
           email: mapEmail(customer.info.email),
           phone: mapPhone(customer.info.phone)
         }
