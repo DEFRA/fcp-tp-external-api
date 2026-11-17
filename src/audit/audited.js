@@ -1,4 +1,9 @@
+import { constants } from 'node:http2'
+
+const { HTTP_STATUS_UNAUTHORIZED, HTTP_STATUS_FORBIDDEN } = constants
+
 const AUTH_ERROR_CODES = new Set(['UNAUTHORIZED', 'UNAUTHENTICATED', 'FORBIDDEN'])
+const AUTH_ERROR_STATUSES = new Set([HTTP_STATUS_UNAUTHORIZED, HTTP_STATUS_FORBIDDEN])
 
 function authErrorCode (error) {
   const { code, status, dalCode } = error?.extensions ?? {}
@@ -7,7 +12,7 @@ function authErrorCode (error) {
     return code
   }
 
-  if (code === 'DAL_REQUEST_REJECTED' && (status === 401 || status === 403)) {
+  if (code === 'DAL_REQUEST_REJECTED' && AUTH_ERROR_STATUSES.has(status)) {
     return dalCode ?? code
   }
 
