@@ -58,4 +58,15 @@ describe('updateCustomerAllFields mutation', () => {
     expect(errors[0].extensions.code).toBe('BAD_USER_INPUT')
     expect(fetchMock).not.toHaveBeenCalled()
   })
+
+  test('sends the address to the DAL in its own shape', async () => {
+    const fetchMock = mockDal({ updateCustomerAllFields: { success: true } })
+
+    const address = { line1: '1 New Street', city: 'Leeds', county: 'West Yorkshire', postalCode: 'LS1 1AA', country: 'UK' }
+    await graphqlRequest(server, UPDATE_CUSTOMER_MUTATION, { input: { crn: '1234567890', address } })
+
+    const [, requestOptions] = fetchMock.mock.calls[0]
+    const { input } = JSON.parse(requestOptions.body).variables
+    expect(input.address).toMatchObject({ line1: '1 New Street', line4: 'West Yorkshire', county: null, uprn: null })
+  })
 })

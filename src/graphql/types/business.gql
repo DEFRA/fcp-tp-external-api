@@ -42,8 +42,8 @@ input UpdateBusinessAllFieldsInput {
   correspondenceEmail: EmailInput
   phone: PhoneInput
   correspondencePhone: PhoneInput
-  address: ValidAddressInput
-  correspondenceAddress: ValidAddressInput
+  address: AddressInput
+  correspondenceAddress: AddressInput
   isCorrespondenceAsBusinessAddress: Boolean
   vat: String
   legalStatusCode: Int

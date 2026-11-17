@@ -2,14 +2,11 @@ import {
   FIRST_NAMES,
   MIDDLE_NAMES,
   LAST_NAMES,
-  BUILDING_NAMES,
-  FLAT_NAMES,
   STREETS,
   AREAS,
   TOWNS,
   COUNTIES,
   COUNTRIES,
-  ORGANISATION_NAMES,
   EMAIL_DOMAINS,
   POSTCODE_AREAS
 } from './fake-data.js'
@@ -45,11 +42,6 @@ const generators = {
 
   fullName: (seedHex) =>
     `${pickFromList(FIRST_NAMES, seedHex, 0)} ${pickFromList(LAST_NAMES, seedHex, 4)}`,
-
-  organisationName: (seedHex) => pickFromList(ORGANISATION_NAMES, seedHex, 0),
-  buildingName: (seedHex) => pickFromList(BUILDING_NAMES, seedHex, 0),
-  flatName: (seedHex) => pickFromList(FLAT_NAMES, seedHex, 0),
-  buildingNumberRange: (seedHex) => String(generateNumber(seedHex, 0, 1, 150)),
 
   street: (seedHex) => pickFromList(STREETS, seedHex, 0),
 

@@ -80,6 +80,8 @@ describe('business query', () => {
     const { info } = JSON.parse(response.payload).data.business
 
     expect(info.vat).not.toBe(dalResponses.business.info.vat)
+    expect(info.address.line1).toEqual(expect.any(String))
+    expect(info.address.uprn).toMatch(/^\d{12}$/)
     expect(info.address.postalCode).not.toBe(dalResponses.business.info.address.postalCode)
     expect(info.email.address).not.toBe(dalResponses.business.info.email.address)
     expect(info.phone.mobile).not.toBe(dalResponses.business.info.phone.mobile)

@@ -1,6 +1,6 @@
 import { getCustomer } from '../../services/customer/get-customer-service.js'
 import { updateCustomer } from '../../services/customer/update-customer-service.js'
-import { assertValidCrn } from '../validation.js'
+import { assertValidCrn, assertValidAddress } from '../validation.js'
 
 export const customerResolvers = {
   Query: {
@@ -12,6 +12,7 @@ export const customerResolvers = {
   Mutation: {
     updateCustomerAllFields: (_parent, { input }, context) => {
       assertValidCrn(input.crn)
+      assertValidAddress(input.address, 'address')
       return updateCustomer(input, context)
     }
   }

@@ -19,17 +19,6 @@ export const LAST_NAMES = [
   'Bailey', 'Shaw', 'Murray'
 ]
 
-export const BUILDING_NAMES = [
-  'The Barn', 'Rose Cottage', 'Mill House', 'The Granary', 'Old Dairy',
-  'Hill Farm', 'Brook House', 'The Stables', 'Yew Tree House', 'Fern Cottage',
-  'Meadow View', 'The Coach House', 'Elm Lodge', 'Spring Farm', 'Manor House'
-]
-
-export const FLAT_NAMES = [
-  'Flat 1', 'Flat 2', 'Flat 3', 'Flat A', 'Flat B',
-  'Apartment 4', 'Apartment 7', 'Unit 2', 'Unit 5', 'Annexe'
-]
-
 export const STREETS = [
   'Church Street', 'Station Road', 'Park Avenue', 'Manor Way',
   'Queens Road', 'Kings Lane', 'Mill Street', 'Brook Road',
@@ -62,13 +51,6 @@ export const COUNTIES = [
 
 export const COUNTRIES = [
   'England', 'Scotland', 'Wales', 'Northern Ireland', 'United Kingdom'
-]
-
-export const ORGANISATION_NAMES = [
-  'Ashfield Estate Office', 'Brambleton Rural Office', 'Clearwater Land Trust',
-  'Downsview Management', 'Elmcroft Holdings', 'Fallowfield Group',
-  'Grangemoor Trust', 'Hartwell Land Office', 'Ivybridge Partnership',
-  'Juniper Estates Office'
 ]
 
 export const EMAIL_DOMAINS = [
