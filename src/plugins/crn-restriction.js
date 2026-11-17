@@ -1,3 +1,4 @@
+import { constants } from 'node:http2'
 import { config } from '../config.js'
 import { createLogger } from '../common/helpers/logging/logger.js'
 import { getTokenCrn, getUserToken } from '../auth/user-token.js'
@@ -72,7 +73,7 @@ export const crnRestriction = {
 
         return h
           .response({ errors: [{ message: FORBIDDEN_MESSAGE, extensions: { code: 'FORBIDDEN' } }] })
-          .code(403)
+          .code(constants.HTTP_STATUS_FORBIDDEN)
           .takeover()
       })
     }
