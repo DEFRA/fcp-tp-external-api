@@ -87,8 +87,9 @@ export const config = convict({
     redact: {
       doc: 'Log paths to redact',
       format: Array,
+      // The forwarded Defra ID token carries the user's name and email, and GET variables can carry CRNs
       default: isProduction
-        ? ['req.headers.authorization', 'req.headers.cookie', 'res.headers']
+        ? ['req.headers.authorization', 'req.headers["x-forwarded-authorization"]', 'req.headers.cookie', 'req.query', 'res.headers']
         : ['req', 'res', 'responseTime']
     }
   },
@@ -224,6 +225,21 @@ export const config = convict({
       sensitive: true
     }
   },
+  audit: {
+    isEnabled: {
+      doc: 'Publish FCP Audit events for reads and updates of business and personal data',
+      format: Boolean,
+      default: false,
+      env: 'AUDIT_ENABLED'
+    },
+    snsTopicArn: {
+      doc: 'SNS topic ARN to publish FCP Audit events to',
+      format: String,
+      nullable: true,
+      default: null,
+      env: 'AUDIT_SNS_TOPIC_ARN'
+    }
+  },
   updateEcho: {
     isEnabled: {
       doc: 'Echo a caller\'s own recent updates back to them instead of a freshly sanitized value',
@@ -255,4 +271,8 @@ if (!config.get('dal.disableAuth')) {
   if (missing.length) {
     throw new Error(`${missing.join(', ')}: must be set unless DAL_DISABLE_AUTH is true`)
   }
+}
+
+if (config.get('audit.isEnabled') && !config.get('audit.snsTopicArn')) {
+  throw new Error('audit.snsTopicArn: must be set when AUDIT_ENABLED is true')
 }

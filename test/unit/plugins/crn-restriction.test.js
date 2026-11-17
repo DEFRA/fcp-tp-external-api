@@ -4,9 +4,14 @@ import { config } from '../../../src/config.js'
 import { crnRestriction } from '../../../src/plugins/crn-restriction.js'
 
 const mockLogger = vi.hoisted(() => ({ info: vi.fn(), warn: vi.fn() }))
+const mockPublish = vi.hoisted(() => vi.fn())
 
 vi.mock('../../../src/common/helpers/logging/logger.js', () => ({
   createLogger: () => mockLogger
+}))
+
+vi.mock('../../../src/audit/publish.js', () => ({
+  publish: mockPublish
 }))
 
 const ALLOWED_CRN = '1000000001'
@@ -34,6 +39,7 @@ beforeEach(async () => {
 afterEach(() => {
   config.set('crnRestriction.isEnabled', false)
   config.set('crnRestriction.allowedCrns', [])
+  config.set('audit.isEnabled', false)
 })
 
 function post (headers = {}) {
@@ -114,6 +120,42 @@ describe('crn restriction', () => {
     expect((await post(headers)).statusCode).toBe(200)
   })
 
+  describe('auditing', () => {
+    test('publishes a denied audit event for a refused request', async () => {
+      config.set('audit.isEnabled', true)
+
+      await post({
+        'x-forwarded-authorization': jwt({ contactId: OTHER_CRN, sessionId: 'session-1', azp: 'third-party-client' }),
+        'x-cdp-request-id': 'trace-1'
+      })
+
+      expect(mockPublish).toHaveBeenCalledWith(expect.objectContaining({
+        correlationid: 'trace-1',
+        user: `IDM/${OTHER_CRN}`,
+        sessionid: 'session-1',
+        audit: {
+          entities: [{ entity: 'request', action: 'rejected', entityid: 'trace-1' }],
+          status: 'denied',
+          details: { reason: 'not-allowed', sourceSystemEntityId: 'third-party-client' }
+        }
+      }))
+    })
+
+    test('does not publish when auditing is disabled', async () => {
+      await post({ 'x-forwarded-authorization': jwt({ contactId: OTHER_CRN }) })
+
+      expect(mockPublish).not.toHaveBeenCalled()
+    })
+
+    test('does not publish for an allowed request', async () => {
+      config.set('audit.isEnabled', true)
+
+      await post({ 'x-forwarded-authorization': jwt({ contactId: ALLOWED_CRN }) })
+
+      expect(mockPublish).not.toHaveBeenCalled()
+    })
+  })
+
   describe('logging', () => {
     async function register () {
       await Hapi.server().register(crnRestriction)
@@ -143,20 +185,17 @@ describe('crn restriction', () => {
       expect(mockLogger.warn).toHaveBeenCalledWith(expect.stringContaining('disabled'))
     })
 
-    test('logs a refusal with the reason and a masked CRN, never the token', async () => {
+    test('logs a refusal with the reason, never the token or CRN', async () => {
       const token = jwt({ contactId: OTHER_CRN })
 
       await post({ 'x-forwarded-authorization': token })
 
       expect(mockLogger.warn).toHaveBeenCalledWith(
-        {
-          event: { action: 'crn-restriction', outcome: 'failure', reason: 'not-allowed' },
-          user: { id: '******0002' }
-        },
+        { event: { action: 'crn-restriction', outcome: 'failure', reason: 'not-allowed' } },
         'Request refused by CRN restriction'
       )
       expect(JSON.stringify(mockLogger.warn.mock.calls)).not.toContain(token)
-      expect(JSON.stringify(mockLogger.warn.mock.calls)).not.toContain(OTHER_CRN)
+      expect(JSON.stringify(mockLogger.warn.mock.calls)).not.toContain(OTHER_CRN.slice(-4))
     })
 
     test.each([

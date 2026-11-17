@@ -1,4 +1,5 @@
 import { GraphQLError } from 'graphql'
+import { withTraceId } from '@defra/hapi-tracing'
 import { config } from '../config.js'
 import { createLogger } from '../common/helpers/logging/logger.js'
 import { getToken } from '../services/dal/token/get-token-service.js'
@@ -6,11 +7,11 @@ import { getToken } from '../services/dal/token/get-token-service.js'
 const logger = createLogger()
 
 function buildRequest (bearerToken, forwardedUserToken, query, variables) {
-  const headers = {
+  const headers = withTraceId(config.get('tracing.header'), {
     'Content-Type': 'application/json',
     'gateway-type': config.get('dal.gatewayType'),
     Authorization: bearerToken
-  }
+  })
 
   if (forwardedUserToken) {
     headers['x-forwarded-authorization'] = forwardedUserToken
