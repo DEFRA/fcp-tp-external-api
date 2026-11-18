@@ -525,8 +525,9 @@ log also drops the forwarded Defra ID token and the query string.
 
 ### AWS access
 
-The SNS client takes its region, endpoint and credentials from the standard `AWS_*` environment
-variables. On CDP that is the service's IAM role, so no keys are configured. The topic, and its
+The SNS client is set up as in `fcp-audit-publisher-stub`. The region defaults to `eu-west-2`. On
+CDP there is no endpoint or keys, so the client uses the service's IAM role. Locally,
+`AWS_ENDPOINT_URL` points it at Floci with the access keys alongside. The topic, and its
 subscription to FCP Audit's queue, are platform configuration outside this repository.
 
 ### Trying it locally
@@ -679,9 +680,9 @@ run misconfigured. See `src/config.js`, and `.env.example` for a working local s
 | `TRACING_HEADER` | | `x-cdp-request-id` | Header carrying the CDP trace ID |
 | `AUDIT_ENABLED` | | `false` | Publish FCP Audit events |
 | `AUDIT_SNS_TOPIC_ARN` | yes, when auditing | | SNS topic to publish audit events to |
-| `AWS_REGION` | yes, when auditing | | Set by CDP. Region of the audit topic |
+| `AWS_REGION` | | `eu-west-2` | Region of the audit topic |
 | `AWS_ENDPOINT_URL` | | | Local only. Points the SNS client at Floci |
-| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | | | Local only. CDP uses the service's IAM role |
+| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | | | Local only, with `AWS_ENDPOINT_URL`. CDP uses the service's IAM role |
 
 ## Testing
 

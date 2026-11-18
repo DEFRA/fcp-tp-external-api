@@ -240,6 +240,36 @@ export const config = convict({
       env: 'AUDIT_SNS_TOPIC_ARN'
     }
   },
+  aws: {
+    region: {
+      doc: 'AWS region',
+      format: String,
+      default: 'eu-west-2',
+      env: 'AWS_REGION'
+    },
+    endpoint: {
+      doc: 'AWS endpoint URL, for example to use with a local AWS emulator',
+      format: String,
+      nullable: true,
+      default: null,
+      env: 'AWS_ENDPOINT_URL'
+    },
+    accessKeyId: {
+      doc: 'AWS access key ID, only used with a custom endpoint',
+      format: String,
+      nullable: true,
+      default: null,
+      env: 'AWS_ACCESS_KEY_ID'
+    },
+    secretAccessKey: {
+      doc: 'AWS secret access key, only used with a custom endpoint',
+      format: String,
+      nullable: true,
+      default: null,
+      env: 'AWS_SECRET_ACCESS_KEY',
+      sensitive: true
+    }
+  },
   updateEcho: {
     isEnabled: {
       doc: 'Echo a caller\'s own recent updates back to them instead of a freshly sanitized value',

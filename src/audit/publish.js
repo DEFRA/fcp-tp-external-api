@@ -9,6 +9,18 @@ const logger = createLogger()
 
 let snsClient
 
+function createSnsClient () {
+  const { region, endpoint, accessKeyId, secretAccessKey } = config.get('aws')
+
+  return new SNSClient({
+    region,
+    ...(endpoint && {
+      endpoint,
+      credentials: { accessKeyId, secretAccessKey }
+    })
+  })
+}
+
 function environmentName () {
   const environment = config.get('cdpEnvironment')
   return environment === 'local' ? 'local' : `cdp-${environment}`
@@ -17,8 +29,7 @@ function environmentName () {
 // Never throws: a lost audit event is logged rather than failing the caller's request
 export async function publish (event) {
   try {
-    // Region, endpoint and credentials come from the AWS_* environment variables
-    snsClient ??= new SNSClient()
+    snsClient ??= createSnsClient()
 
     await publishAuditEvent(event, {
       snsClient,
