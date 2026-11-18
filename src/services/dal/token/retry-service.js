@@ -1,13 +1,12 @@
+import { constants } from 'node:http2'
 import { createLogger } from '../../../common/helpers/logging/logger.js'
 import { drop } from '../../../common/helpers/caching/token-cache.js'
 import { DAL_TOKEN_CACHE_KEY } from './constants.js'
 
 const logger = createLogger()
 
-const UNAUTHORIZED = 401
-
 function isUnauthorised (err) {
-  return err?.output?.statusCode === UNAUTHORIZED
+  return err?.output?.statusCode === constants.HTTP_STATUS_UNAUTHORIZED
 }
 
 export async function retry (fn, retriesLeft = 3, interval = 1000, exponential = true) {

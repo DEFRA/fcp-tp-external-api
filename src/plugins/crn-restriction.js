@@ -1,29 +1,28 @@
+import { constants } from 'node:http2'
 import { config } from '../config.js'
 import { createLogger } from '../common/helpers/logging/logger.js'
 import { getTokenCrn, getUserToken } from '../auth/user-token.js'
+import { buildAuditEvent, getCorrelationId } from '../audit/event.js'
+import { publish } from '../audit/publish.js'
 
 const logger = createLogger()
 
 const FORBIDDEN_MESSAGE = 'The signed-in user does not have permission to access this data'
 
-function maskCrn (crn) {
-  return crn ? `******${crn.slice(-4)}` : null
-}
-
 // Returns why the request must be refused, or null when it may go ahead.
 function denialReason (request) {
   const token = getUserToken(request)
   if (!token) {
-    return { reason: 'no-token' }
+    return 'no-token'
   }
 
   const crn = getTokenCrn(token)
   if (!crn) {
-    return { reason: 'invalid-token' }
+    return 'invalid-token'
   }
 
   if (!config.get('crnRestriction.allowedCrns').includes(crn)) {
-    return { reason: 'not-allowed', crn }
+    return 'not-allowed'
   }
 
   return null
@@ -49,27 +48,32 @@ export const crnRestriction = {
     register: (server) => {
       logStartupState()
 
-      server.ext('onPreAuth', (request, h) => {
+      server.ext('onPreAuth', async (request, h) => {
         if (!config.get('crnRestriction.isEnabled') || request.route.path !== config.get('graphql.path')) {
           return h.continue
         }
 
-        const denial = denialReason(request)
-        if (!denial) {
+        const reason = denialReason(request)
+        if (!reason) {
           return h.continue
         }
 
         logger.warn(
-          {
-            event: { action: 'crn-restriction', outcome: 'failure', reason: denial.reason },
-            ...(denial.crn && { user: { id: maskCrn(denial.crn) } })
-          },
+          { event: { action: 'crn-restriction', outcome: 'failure', reason } },
           'Request refused by CRN restriction'
         )
 
+        if (config.get('audit.isEnabled')) {
+          await publish(buildAuditEvent(request, {
+            entities: [{ entity: 'request', action: 'rejected', entityid: getCorrelationId(request) }],
+            status: 'denied',
+            details: { reason }
+          }))
+        }
+
         return h
           .response({ errors: [{ message: FORBIDDEN_MESSAGE, extensions: { code: 'FORBIDDEN' } }] })
-          .code(403)
+          .code(constants.HTTP_STATUS_FORBIDDEN)
           .takeover()
       })
     }

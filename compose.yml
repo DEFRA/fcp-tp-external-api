@@ -55,6 +55,12 @@ services:
       MONGO_URI: mongodb://mongodb:27017
       MONGO_DATABASE: 'fcp-dal-api'
       SERVICE_VERSION: 0.0.0
+      # Set DAL_AUDIT_SNS_TOPIC_ARN (with the audit profile) to see the DAL's events next to ours
+      AUDIT_SNS_TOPIC_ARN: ${DAL_AUDIT_SNS_TOPIC_ARN:-}
+      AWS_REGION: eu-west-2
+      AWS_ENDPOINT_URL_SNS: http://floci:4566
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
     depends_on:
       mongodb:
         condition: service_healthy
@@ -67,6 +73,42 @@ services:
       interval: 3s
       timeout: 2s
       retries: 5
+
+  ################################################################################
+
+  # Local AWS emulator for audit events. Only under the `audit` profile.
+  floci:
+    profiles:
+      - audit
+    image: hectorvent/floci:latest
+    ports:
+      - '4566:4566'
+    environment:
+      FLOCI_HOSTNAME: floci
+      FLOCI_DEFAULT_REGION: eu-west-2
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+    networks:
+      - fcp-tp-external-api
+
+  floci-init:
+    profiles:
+      - audit
+    image: amazon/aws-cli
+    entrypoint: /bin/sh
+    command: /setup/init.sh
+    depends_on:
+      floci:
+        condition: service_started
+    environment:
+      AWS_ENDPOINT_URL: http://floci:4566
+      AWS_REGION: eu-west-2
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+    volumes:
+      - ./floci/init.sh:/setup/init.sh
+    networks:
+      - fcp-tp-external-api
 
   ################################################################################
 
@@ -93,6 +135,11 @@ services:
       SANITIZE_SECRET: local-sanitize-secret-change-me
       RESTRICT_CRNS: 'false'
       GRAPHQL_INTROSPECTION_ENABLED: 'true'
+      AUDIT_ENABLED: ${AUDIT_ENABLED:-false}
+      AUDIT_SNS_TOPIC_ARN: ${AUDIT_SNS_TOPIC_ARN:-}
+      AWS_ENDPOINT_URL: http://floci:4566
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
     networks:
       - fcp-tp-external-api
     volumes:

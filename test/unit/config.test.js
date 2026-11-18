@@ -1,4 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest'
+import { Writable } from 'node:stream'
+import pino from 'pino'
 
 describe('config', () => {
   beforeEach(() => {
@@ -14,11 +16,70 @@ describe('config', () => {
     expect(config.get('log.format')).toBe('ecs')
     expect(config.get('log.redact')).toEqual([
       'req.headers.authorization',
+      'req.headers["x-forwarded-authorization"]',
       'req.headers.cookie',
+      'req.query',
       'res.headers'
     ])
 
     vi.unstubAllEnvs()
+  })
+
+  test('keeps the forwarded Defra ID token and query string out of production request logs', async () => {
+    vi.stubEnv('NODE_ENV', 'production')
+
+    const { config } = await import('../../src/config.js')
+
+    let output = ''
+    const stream = new Writable({
+      write (chunk, _encoding, callback) {
+        output += chunk
+        callback()
+      }
+    })
+    const logger = pino({ redact: { paths: config.get('log.redact'), remove: true } }, stream)
+
+    logger.info({
+      req: {
+        url: '/graphql',
+        query: { variables: '{"crn":"1000000001"}' },
+        headers: { 'x-forwarded-authorization': 'a-defra-id-token', 'user-agent': 'curl' }
+      }
+    }, 'request completed')
+
+    expect(output).toContain('user-agent')
+    expect(output).not.toContain('a-defra-id-token')
+    expect(output).not.toContain('1000000001')
+
+    vi.unstubAllEnvs()
+  })
+
+  describe('auditing', () => {
+    test('is disabled by default', async () => {
+      vi.stubEnv('AUDIT_ENABLED', undefined)
+
+      const { config } = await import('../../src/config.js')
+
+      expect(config.get('audit.isEnabled')).toBe(false)
+    })
+
+    test('stops startup when enabled without a topic', async () => {
+      vi.stubEnv('AUDIT_ENABLED', 'true')
+      vi.stubEnv('AUDIT_SNS_TOPIC_ARN', undefined)
+
+      await expect(import('../../src/config.js')).rejects.toThrow(
+        'audit.snsTopicArn: must be set when AUDIT_ENABLED is true'
+      )
+    })
+
+    test('starts when enabled with a topic', async () => {
+      vi.stubEnv('AUDIT_ENABLED', 'true')
+      vi.stubEnv('AUDIT_SNS_TOPIC_ARN', 'arn:aws:sns:eu-west-2:000000000000:audit')
+
+      const { config } = await import('../../src/config.js')
+
+      expect(config.get('audit.snsTopicArn')).toBe('arn:aws:sns:eu-west-2:000000000000:audit')
+    })
   })
 
   describe('Entra credentials', () => {

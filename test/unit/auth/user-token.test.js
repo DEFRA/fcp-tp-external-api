@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest'
-import { getTokenCrn, getUserToken } from '../../../src/auth/user-token.js'
+import { getTokenClaims, getTokenCrn, getUserToken } from '../../../src/auth/user-token.js'
 
 function jwt (payload) {
   const encode = (value) => Buffer.from(JSON.stringify(value)).toString('base64url')
@@ -19,6 +19,26 @@ describe('getUserToken', () => {
 
   test('returns undefined when neither header is present', () => {
     expect(getUserToken({ headers: {} })).toBeUndefined()
+  })
+})
+
+describe('getTokenClaims', () => {
+  test('returns the CRN, session id and authorised party', () => {
+    const token = jwt({ contactId: '1234567890', sessionId: 'session-1', azp: 'third-party-client', email: 'someone@example.com' })
+
+    expect(getTokenClaims(token)).toEqual({ crn: '1234567890', sessionId: 'session-1', azp: 'third-party-client' })
+  })
+
+  test('returns null for claims that are missing or not strings', () => {
+    expect(getTokenClaims(jwt({ sessionId: { id: 1 } }))).toEqual({ crn: null, sessionId: null, azp: null })
+  })
+
+  test.each([
+    ['undefined', undefined],
+    ['a value that is not a JWT', 'not-a-jwt'],
+    ['a payload that is not JSON', `header.${Buffer.from('plain text').toString('base64url')}.signature`]
+  ])('returns no claims for %s', (_name, token) => {
+    expect(getTokenClaims(token)).toEqual({})
   })
 })
 

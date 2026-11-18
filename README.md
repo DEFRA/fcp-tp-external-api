@@ -18,6 +18,7 @@ in the same way `fcp-sfd-frontend` is.
 - [Sanitization](#sanitization)
 - [Echoing recent updates](#echoing-recent-updates)
 - [Restricting access by CRN](#restricting-access-by-crn)
+- [Auditing](#auditing)
 - [Entra setup](#entra-setup)
 - [Local development](#local-development)
 - [Configuration](#configuration)
@@ -66,6 +67,7 @@ A request flows through these layers:
 | DAL connector | `src/dal/` | Authenticated GraphQL calls to `fcp-dal-api` |
 | Mappers | `src/mappers/` | Translate between DAL shapes and the API's own types |
 | Sanitizer | `src/sanitizer/` | Substitute business and personal data |
+| Audit | `src/audit/` | Publish FCP Audit events for what was read or changed |
 
 Resolvers stay thin. Each one validates its identifier and hands off to a service, so business
 logic never leaks into the GraphQL layer.
@@ -76,8 +78,9 @@ This service does **not** authenticate its callers. The API gateway sitting in f
 every deployed environment does that. What the service does care about is the caller's Defra ID
 token: it is read from `x-forwarded-authorization` (falling back to `authorization`) and passed
 straight through to the DAL as `x-forwarded-authorization`, so the DAL can apply the end user's
-own permissions. The service never validates it. The only thing it reads from it is the CRN, to
-[restrict access to an allow-list of CRNs](#restricting-access-by-crn).
+own permissions. The service never validates it. It only reads claims from it: the CRN, to
+[restrict access to an allow-list of CRNs](#restricting-access-by-crn), and the CRN, session ID
+and authorised party for [audit events](#auditing).
 
 ### Outbound requests to the DAL
 
@@ -87,7 +90,9 @@ Every DAL call carries two tokens:
 - `x-forwarded-authorization` — the caller's Defra ID token, identifying the end user.
 
 It also sends `gateway-type: external`, telling the DAL to route through the external KITS
-gateway.
+gateway, and the CDP trace ID as `x-cdp-request-id`, so the DAL's audit events share our
+correlation ID. When a request arrives without one, which only happens locally, the service
+generates it.
 
 ### Entra token handling
 
@@ -454,9 +459,102 @@ Things to be aware of:
 - Only the CRN **in the caller's token** is checked, not the `crn` or `sbi` a query asks about.
 - The token's signature is not verified here, only decoded. The DAL verifies it on every call, so a
   forged token for an allowed CRN passes this check but is rejected by the DAL.
-- Refused requests are logged with a reason and the CRN masked to its last four digits. The token
-  is never logged.
+- Refused requests are logged with a reason only. The CRN and token are never logged. With
+  [auditing](#auditing) on, a `denied` audit event is published too.
 - Locally, `.env.example` and `compose.yml` set `RESTRICT_CRNS=false`.
+
+## Auditing
+
+With `AUDIT_ENABLED=true` the service publishes an event to
+[FCP Audit](https://github.com/DEFRA/fcp-audit) for every read or update of business or personal
+data, using [`@defra/fcp-audit-publisher`](https://github.com/DEFRA/fcp-audit-publisher) to send
+it to the SNS topic in `AUDIT_SNS_TOPIC_ARN`. It is off by default, so local development and the
+published image need nothing extra.
+
+The DAL publishes its own events for the same calls. Ours add what only this service knows: which
+third party asked, and exactly what was returned to them. Both carry the same `correlationid`.
+
+### What is audited
+
+One event is published per root field of a GraphQL request, after the response is ready:
+
+| Operation | Entities (`entity` / `action` / `entityid`) | Accounts |
+| --- | --- | --- |
+| `business(sbi)` | `business` / `read` / SBI | `sbi`, `organisationId` |
+| `business { customer(crn) }` | `permission-list` / `read` / `<sbi>-<crn>`, in the business event | `sbi`, `crn` |
+| `customer(crn)` | `person` / `read` / CRN | `crn` |
+| `updateBusinessAllFields` | `business` / `updated` / SBI | `sbi` |
+| `updateCustomerAllFields` | `person` / `updated` / CRN | `crn` |
+| Refused by the CRN restriction | `request` / `rejected` / correlation ID | |
+
+Only successes and authorisation failures are audited. A request the DAL refuses (`UNAUTHORIZED`,
+`FORBIDDEN`, or HTTP 401 or 403) is published with status `denied`. Validation errors and DAL
+outages are not audited: no data was read or changed.
+
+### What an event contains
+
+| Field | Value |
+| --- | --- |
+| `application` | `FAL Third Party API` |
+| `component` | `fcp-tp-external-api` |
+| `environment` | `cdp-<ENVIRONMENT>`, or `local` |
+| `correlationid` | The `x-cdp-request-id` trace ID |
+| `user` | `IDM/<contactId>` from the Defra ID token |
+| `sessionid` | The Defra ID token's `sessionId` |
+| `ip` | The calling service's IP: the first `x-forwarded-for` entry, else the remote address |
+| `audit.status` | `success` or `denied` |
+| `audit.details.rootField` | The root field, or its alias |
+| `audit.details.arguments` | The root field's arguments as JSON, including the full input of an update |
+| `audit.details.responseBody` | The data returned for the root field as JSON. Everything returned is treated as read |
+| `audit.details.sourceSystemEntityId` | The Defra ID token's `azp`: the third party's client ID |
+| `audit.details.errorCodes` | Why a `denied` event was refused |
+
+FCP Audit lowercases every key it receives, so `arguments` and `responseBody` are sent as JSON
+strings to keep their shape.
+
+The Defra ID token is not verified by this service. On `success` events, and `denied` events
+where the DAL returned 403, the DAL has verified it, so `user`, `sessionid` and
+`sourceSystemEntityId` can be trusted. On events refused by the CRN restriction, or by the DAL
+with 401, the token was never verified and those claims could be forged.
+
+### Personal data
+
+Audit events contain personal data by design. Logs never do: an event that fails to publish is
+logged with the error only, never the event, and the request continues. In production the request
+log also drops the forwarded Defra ID token and the query string.
+
+### AWS access
+
+The SNS client is set up as in `fcp-audit-publisher-stub`. The region defaults to `eu-west-2`. On
+CDP there is no endpoint or keys, so the client uses the service's IAM role. Locally,
+`AWS_ENDPOINT_URL` points it at Floci with the access keys alongside. The topic, and its
+subscription to FCP Audit's queue, are platform configuration outside this repository.
+
+### Trying it locally
+
+`compose.yml` has a Floci (`hectorvent/floci`) AWS emulator under the `audit`
+profile. `floci/init.sh` creates the topic `fcp_tp_external_api_audit` and subscribes a queue to
+it named `fcp_audit`, like FCP Audit's own.
+
+1. In `.env`, set `AUDIT_ENABLED=true` and uncomment the auditing block, which sets
+   `COMPOSE_PROFILES=audit`.
+2. Run `npm run local`.
+3. Call the API, then read the events:
+
+   ```bash
+   docker compose run --rm --entrypoint aws floci-init sqs receive-message \
+     --queue-url http://floci:4566/000000000000/fcp_audit \
+     --max-number-of-messages 10
+   ```
+
+   Each event is the `Message` inside an SNS envelope.
+
+`DAL_AUDIT_SNS_TOPIC_ARN` points the local DAL at the same topic, so its events for a request
+show up next to ours with the same `correlationid`.
+
+To feed a local [fcp-audit](https://github.com/DEFRA/fcp-audit) instead, point `AWS_ENDPOINT_URL`
+at its Floci (`http://localhost:4567`) and `AUDIT_SNS_TOPIC_ARN` at its
+`fcp_audit_publisher_stub` topic.
 
 ## Entra setup
 
@@ -525,6 +623,8 @@ npm run services:down   # Stop the dependency containers
 | `dal-mock` | 3100 | [fcp-dal-upstream-services-mock](https://github.com/DEFRA/fcp-dal-upstream-services-mock), which stubs the KITS and Hitachi services the DAL calls |
 | `mongodb` | 27017 | The DAL's database |
 | `fcp-tp-external-api` | 3001 | This service. Only under the `app` profile |
+| `floci` | 4566 | Local AWS emulator for [audit events](#trying-it-locally). Only under the `audit` profile |
+| `floci-init` | | Creates the audit topic and queue in Floci. Only under the `audit` profile |
 
 Published images are used for the DAL and its mock, so nothing needs building or cloning. The DAL
 runs with `DISABLE_AUTH=true` and `DISABLE_PROXY=true`, and this service runs with
@@ -578,6 +678,11 @@ run misconfigured. See `src/config.js`, and `.env.example` for a working local s
 | `ENABLE_SECURE_CONTEXT` | | on in production | Load CDP's CA certificates |
 | `ENABLE_METRICS` | | on in production | Report CloudWatch metrics |
 | `TRACING_HEADER` | | `x-cdp-request-id` | Header carrying the CDP trace ID |
+| `AUDIT_ENABLED` | | `false` | Publish FCP Audit events |
+| `AUDIT_SNS_TOPIC_ARN` | yes, when auditing | | SNS topic to publish audit events to |
+| `AWS_REGION` | | `eu-west-2` | Region of the audit topic |
+| `AWS_ENDPOINT_URL` | | | Local only. Points the SNS client at Floci |
+| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | | | Local only, with `AWS_ENDPOINT_URL`. CDP uses the service's IAM role |
 
 ## Testing
 
