@@ -74,8 +74,7 @@ describe('startServer', () => {
 
       await startServerImport.startServer()
 
-      expect(mockLoggerInfo).toHaveBeenCalledWith('Server failed to start')
-      expect(mockLoggerError).toHaveBeenCalledWith(new Error('Server failed to start'))
+      expect(mockLoggerError).toHaveBeenCalledWith(new Error('Server failed to start'), 'Server failed to start')
     })
   })
 })

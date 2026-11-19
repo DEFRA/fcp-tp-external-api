@@ -1,7 +1,8 @@
 import { constants } from 'node:http2'
 import { config } from '../config.js'
 import { createLogger } from '../common/helpers/logging/logger.js'
-import { getTokenCrn, getUserToken } from '../auth/user-token.js'
+import { serverMetrics } from '../common/helpers/metrics.js'
+import { getCallerClientId, getTokenCrn, getUserToken } from '../auth/user-token.js'
 import { buildAuditEvent, getCorrelationId } from '../audit/event.js'
 import { publish } from '../audit/publish.js'
 
@@ -58,10 +59,15 @@ export const crnRestriction = {
           return h.continue
         }
 
+        const clientId = getCallerClientId(getUserToken(request))
         logger.warn(
-          { event: { action: 'crn-restriction', outcome: 'failure', reason } },
+          {
+            event: { action: 'crn-restriction', outcome: 'failure', reason },
+            ...(clientId && { tenant: { id: clientId } })
+          },
           'Request refused by CRN restriction'
         )
+        serverMetrics.counter('CrnRestrictionDenials')
 
         if (config.get('audit.isEnabled')) {
           await publish(buildAuditEvent(request, {

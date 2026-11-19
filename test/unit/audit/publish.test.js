@@ -18,6 +18,7 @@ vi.mock('../../../src/common/helpers/logging/logger.js', () => ({
 }))
 
 const { publish } = await import('../../../src/audit/publish.js')
+const { serverMetrics } = await import('../../../src/common/helpers/metrics.js')
 
 const event = {
   correlationid: 'trace-1',
@@ -99,15 +100,27 @@ describe('publish', () => {
     expect(mockPublishAuditEvent.mock.calls[0][1].environment).toBe(expected)
   })
 
+  test('counts published events', async () => {
+    await publish(event)
+
+    expect(serverMetrics.counter).toHaveBeenCalledWith('AuditEventsPublished')
+    expect(serverMetrics.counter).not.toHaveBeenCalledWith('AuditPublishFailures')
+  })
+
   test('logs a failure without the event and does not throw', async () => {
     mockPublishAuditEvent.mockRejectedValueOnce(new Error('Invalid audit event: "ip" is not allowed to be empty'))
 
     await expect(publish(event)).resolves.toBeUndefined()
 
     expect(mockLogger.error).toHaveBeenCalledWith(
-      { error: { type: 'Error', message: 'Invalid audit event: "ip" is not allowed to be empty' } },
+      {
+        event: { action: 'audit-publish', outcome: 'failure' },
+        error: { type: 'Error', message: 'Invalid audit event: "ip" is not allowed to be empty' }
+      },
       'Audit event could not be published'
     )
+    expect(serverMetrics.counter).toHaveBeenCalledWith('AuditPublishFailures')
+    expect(serverMetrics.counter).not.toHaveBeenCalledWith('AuditEventsPublished')
     const logged = JSON.stringify(mockLogger.error.mock.calls)
     expect(logged).not.toContain('1000000001')
     expect(logged).not.toContain('someone@example.com')

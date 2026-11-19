@@ -10,7 +10,6 @@ export const apollo = {
     path: config.get('graphql.path'),
     context: async ({ request }) => ({
       forwardedUserToken: getUserToken(request),
-      logger: request.logger,
       audit: config.get('audit.isEnabled') ? { request, entries: new Map() } : null
     })
   }

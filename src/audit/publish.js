@@ -2,6 +2,7 @@ import { SNSClient } from '@aws-sdk/client-sns'
 import { publishAuditEvent } from '@defra/fcp-audit-publisher'
 import { config } from '../config.js'
 import { createLogger } from '../common/helpers/logging/logger.js'
+import { serverMetrics } from '../common/helpers/metrics.js'
 
 const APPLICATION = 'FAL Third Party API'
 
@@ -38,8 +39,13 @@ export async function publish (event) {
       component: config.get('serviceName'),
       environment: environmentName()
     })
+    serverMetrics.counter('AuditEventsPublished')
   } catch (err) {
     // The event holds personal data, so it is never logged. Schema errors name fields, not values.
-    logger.error({ error: { type: err.name, message: err.message } }, 'Audit event could not be published')
+    logger.error(
+      { event: { action: 'audit-publish', outcome: 'failure' }, error: { type: err.name, message: err.message } },
+      'Audit event could not be published'
+    )
+    serverMetrics.counter('AuditPublishFailures')
   }
 }

@@ -1,4 +1,5 @@
 import Hapi from '@hapi/hapi'
+import './common/helpers/metrics-environment.js'
 import { secureContext } from '@defra/hapi-secure-context'
 import { metrics } from '@defra/cdp-metrics'
 import { config } from './config.js'

@@ -1,14 +1,29 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest'
+import { constants } from 'node:http2'
+
+const {
+  HTTP_STATUS_OK,
+  HTTP_STATUS_BAD_REQUEST,
+  HTTP_STATUS_FORBIDDEN,
+  HTTP_STATUS_NOT_FOUND,
+  HTTP_STATUS_BAD_GATEWAY
+} = constants
 
 const getToken = vi.fn()
+const mockLogger = vi.hoisted(() => ({ error: vi.fn(), warn: vi.fn() }))
 
 vi.mock('../../../src/services/dal/token/get-token-service.js', () => ({
   getToken: (...args) => getToken(...args)
 }))
 
-const { queryDal } = await import('../../../src/dal/connector.js')
+vi.mock('../../../src/common/helpers/logging/logger.js', () => ({
+  createLogger: () => mockLogger
+}))
 
-function jsonResponse (body, { ok = true, status = 200 } = {}) {
+const { queryDal } = await import('../../../src/dal/connector.js')
+const { serverMetrics } = await import('../../../src/common/helpers/metrics.js')
+
+function jsonResponse (body, { ok = true, status = HTTP_STATUS_OK } = {}) {
   return { ok, status, json: async () => body, text: async () => JSON.stringify(body) }
 }
 
@@ -72,10 +87,10 @@ describe('queryDal', () => {
   })
 
   test('reports a rejected request', async () => {
-    fetch.mockResolvedValue(jsonResponse({}, { ok: false, status: 403 }))
+    fetch.mockResolvedValue(jsonResponse({}, { ok: false, status: HTTP_STATUS_FORBIDDEN }))
 
     await expect(queryDal('query {}', {})).rejects.toMatchObject({
-      extensions: { code: 'DAL_REQUEST_REJECTED', status: 403 }
+      extensions: { code: 'DAL_REQUEST_REJECTED', status: HTTP_STATUS_FORBIDDEN }
     })
   })
 
@@ -83,14 +98,14 @@ describe('queryDal', () => {
     fetch.mockResolvedValue(
       jsonResponse(
         { errors: [{ message: 'Customer not found', extensions: { code: 'NOT_FOUND' } }], data: { customer: null } },
-        { ok: false, status: 404 }
+        { ok: false, status: HTTP_STATUS_NOT_FOUND }
       )
     )
 
     await expect(queryDal('query {}', {})).rejects.toMatchObject({
       extensions: {
         code: 'DAL_REQUEST_REJECTED',
-        status: 404,
+        status: HTTP_STATUS_NOT_FOUND,
         dalMessage: 'Customer not found',
         dalCode: 'NOT_FOUND'
       }
@@ -98,11 +113,11 @@ describe('queryDal', () => {
   })
 
   test('reports a rejected request when the body is not valid JSON', async () => {
-    fetch.mockResolvedValue({ ok: false, status: 502, text: async () => '<html>Bad Gateway</html>' })
+    fetch.mockResolvedValue({ ok: false, status: HTTP_STATUS_BAD_GATEWAY, text: async () => '<html>Bad Gateway</html>' })
 
     const error = await queryDal('query {}', {}).catch((err) => err)
 
-    expect(error.extensions).toEqual({ code: 'DAL_REQUEST_REJECTED', status: 502 })
+    expect(error.extensions).toEqual({ code: 'DAL_REQUEST_REJECTED', status: HTTP_STATUS_BAD_GATEWAY })
   })
 
   test('surfaces errors returned in the DAL response body', async () => {
@@ -123,5 +138,126 @@ describe('queryDal', () => {
       message: 'Something went wrong',
       extensions: { code: 'DAL_ERROR' }
     })
+  })
+})
+
+describe('queryDal logging and metrics', () => {
+  const query = 'query Business($sbi: ID!) { business(sbi: $sbi) { sbi } }'
+
+  beforeEach(() => {
+    getToken.mockResolvedValue('Bearer a-token')
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ data: { business: { sbi: '123456789' } } })))
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  function loggedCalls () {
+    return [...mockLogger.error.mock.calls, ...mockLogger.warn.mock.calls]
+  }
+
+  function loggedFields () {
+    return loggedCalls()[0][0]
+  }
+
+  test('records the duration of each DAL call against its operation', async () => {
+    await queryDal(query, { sbi: '123456789' })
+
+    expect(serverMetrics.millis).toHaveBeenCalledWith('DalRequestDuration', expect.any(Number))
+    expect(serverMetrics.millis).toHaveBeenCalledWith('DalOperationDuration', expect.any(Number), { DalOperation: 'Business' })
+    expect(loggedCalls()).toHaveLength(0)
+  })
+
+  test('reports a token failure as an unavailable DAL without calling it or logging again', async () => {
+    getToken.mockRejectedValue(new Error('Response Error: 401 Unauthorized'))
+
+    const error = await queryDal(query, {}).catch((err) => err)
+
+    expect(error.message).toBe('The data access layer could not be reached')
+    expect(error.extensions).toEqual({ code: 'DAL_UNAVAILABLE' })
+    expect(fetch).not.toHaveBeenCalled()
+    expect(loggedCalls()).toHaveLength(0)
+  })
+
+  test('logs the socket error code when the DAL cannot be reached', async () => {
+    fetch.mockRejectedValue(new TypeError('fetch failed', { cause: { code: 'ECONNREFUSED' } }))
+
+    await queryDal(query, {}).catch(() => {})
+
+    expect(mockLogger.error).toHaveBeenCalled()
+    expect(loggedFields()).toMatchObject({
+      event: { category: 'dal', action: 'Business', outcome: 'failure', duration: expect.any(Number) },
+      error: { type: 'TypeError', code: 'ECONNREFUSED', message: 'fetch failed' }
+    })
+    expect(serverMetrics.counter).toHaveBeenCalledWith('DalFailures')
+    expect(serverMetrics.counter).not.toHaveBeenCalledWith('DalTimeouts')
+  })
+
+  test('logs and counts a timeout', async () => {
+    fetch.mockRejectedValue(new DOMException('The operation was aborted due to timeout', 'TimeoutError'))
+
+    await queryDal(query, {}).catch(() => {})
+
+    expect(loggedFields().error.code).toBe('TIMEOUT')
+    expect(serverMetrics.counter).toHaveBeenCalledWith('DalFailures')
+    expect(serverMetrics.counter).toHaveBeenCalledWith('DalTimeouts')
+  })
+
+  test('logs the DAL code and status of a rejected request at warn, without using the service\'s own status field', async () => {
+    fetch.mockResolvedValue(
+      jsonResponse({ errors: [{ message: 'Customer not found', extensions: { code: 'NOT FOUND' } }] }, { ok: false, status: HTTP_STATUS_NOT_FOUND })
+    )
+
+    await queryDal(query, {}).catch(() => {})
+
+    expect(mockLogger.error).not.toHaveBeenCalled()
+    expect(loggedFields()).toMatchObject({
+      event: { action: 'Business', outcome: 'failure', reason: `DAL responded with HTTP ${HTTP_STATUS_NOT_FOUND}` },
+      error: { code: 'NOT FOUND', message: 'Customer not found' }
+    })
+    expect(loggedFields()).not.toHaveProperty('http')
+    expect(serverMetrics.counter).toHaveBeenCalledWith('DalFailures')
+  })
+
+  test('logs a 5xx rejection at error, falling back to the HTTP status as the code when there is no body', async () => {
+    fetch.mockResolvedValue({ ok: false, status: HTTP_STATUS_BAD_GATEWAY, text: async () => '<html>Bad Gateway</html>' })
+
+    await queryDal(query, {}).catch(() => {})
+
+    expect(mockLogger.error).toHaveBeenCalled()
+    expect(loggedFields().error).toEqual({ code: `HTTP_${HTTP_STATUS_BAD_GATEWAY}`, message: undefined })
+  })
+
+  test.each([
+    ['a rejected request', { ok: false, status: HTTP_STATUS_BAD_REQUEST }],
+    ['an error response', { ok: true, status: HTTP_STATUS_OK }]
+  ])('never logs the message of an input error in %s, as it can repeat the input', async (_name, status) => {
+    const message = 'Variable "$input" got invalid value "someone@example.com" at "input.email"'
+    fetch.mockResolvedValue(jsonResponse({ errors: [{ message, extensions: { code: 'BAD_USER_INPUT' } }] }, status))
+
+    await queryDal(query, {}).catch(() => {})
+
+    expect(loggedFields().error).toEqual({ code: 'BAD_USER_INPUT', message: undefined })
+    expect(JSON.stringify(loggedCalls())).not.toContain('someone@example.com')
+  })
+
+  test('logs the code and message of errors in a successful response', async () => {
+    fetch.mockResolvedValue(jsonResponse({ errors: [{ message: 'FRN not found for business', extensions: { code: 'NOT FOUND' } }] }))
+
+    await queryDal(query, {}).catch(() => {})
+
+    expect(mockLogger.error).toHaveBeenCalled()
+    expect(loggedFields()).toMatchObject({
+      event: { action: 'Business', outcome: 'failure' },
+      error: { code: 'NOT FOUND', message: 'FRN not found for business' }
+    })
+    expect(serverMetrics.counter).toHaveBeenCalledWith('DalFailures')
+  })
+
+  test('names the operation unknown when the query has no name', async () => {
+    await queryDal('{ business { sbi } }', {})
+
+    expect(serverMetrics.millis).toHaveBeenCalledWith('DalOperationDuration', expect.any(Number), { DalOperation: 'unknown' })
   })
 })

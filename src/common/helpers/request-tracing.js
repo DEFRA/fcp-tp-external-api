@@ -14,6 +14,18 @@ export const requestTracing = {
         return h.continue
       })
 
+      // Lets a third party quote the trace ID when they report a problem
+      server.ext('onPreResponse', (request, h) => {
+        const traceId = request.headers[tracingHeader]
+        const { response } = request
+        if (response.isBoom) {
+          response.output.headers[tracingHeader] = traceId
+        } else {
+          response.header(tracingHeader, traceId)
+        }
+        return h.continue
+      })
+
       await server.register({ plugin: tracing.plugin, options: { tracingHeader } })
     }
   }

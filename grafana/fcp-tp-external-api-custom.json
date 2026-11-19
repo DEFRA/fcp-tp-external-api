@@ -1,0 +1,705 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "gridPos": { "h": 2, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "options": {
+        "content": "# Traffic\nGraphQL errors are returned with HTTP 200, so the platform's HTTP status panels do not show them. These do.",
+        "mode": "markdown"
+      },
+      "title": "",
+      "type": "text"
+    },
+    {
+      "datasource": { "type": "cloudwatch", "uid": "" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "fillOpacity": 20, "lineWidth": 1, "showPoints": "never", "spanNulls": false, "stacking": { "mode": "none" } },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        }
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 2 },
+      "id": 1,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "title": "GraphQL requests per hour",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "cloudwatch", "uid": "" },
+          "dimensions": {},
+          "label": "Requests",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "GraphQLRequests",
+          "metricQueryType": 0,
+          "namespace": "fcp-tp-external-api",
+          "period": "3600",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "statistic": "Sum"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "cloudwatch", "uid": "" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "fillOpacity": 20, "lineWidth": 1, "showPoints": "never", "spanNulls": false, "stacking": { "mode": "normal" } },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        }
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 2 },
+      "id": 2,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "title": "Root fields per hour, by outcome",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "cloudwatch", "uid": "" },
+          "dimensions": { "Operation": "*", "Outcome": "*" },
+          "label": "${PROP('Dim.Operation')} ${PROP('Dim.Outcome')}",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "OperationRequests",
+          "metricQueryType": 0,
+          "namespace": "fcp-tp-external-api",
+          "period": "3600",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "statistic": "Sum"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "cloudwatch", "uid": "" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "bars", "fillOpacity": 60, "lineWidth": 1, "showPoints": "never", "spanNulls": false, "stacking": { "mode": "none" } },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Server errors" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Client errors" }, "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Unexpected errors" }, "properties": [{ "id": "color", "value": { "fixedColor": "purple", "mode": "fixed" } }] }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 2 },
+      "id": 3,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "title": "Failed requests per 5 minutes",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "cloudwatch", "uid": "" },
+          "dimensions": {},
+          "label": "Server errors",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "GraphQLServerErrors",
+          "metricQueryType": 0,
+          "namespace": "fcp-tp-external-api",
+          "period": "300",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": { "type": "cloudwatch", "uid": "" },
+          "dimensions": {},
+          "label": "Client errors",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "GraphQLClientErrors",
+          "metricQueryType": 0,
+          "namespace": "fcp-tp-external-api",
+          "period": "300",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "default",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": { "type": "cloudwatch", "uid": "" },
+          "dimensions": {},
+          "label": "Unexpected errors",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "UnexpectedErrors",
+          "metricQueryType": 0,
+          "namespace": "fcp-tp-external-api",
+          "period": "300",
+          "queryMode": "Metrics",
+          "refId": "C",
+          "region": "default",
+          "statistic": "Sum"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "cloudwatch", "uid": "" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "bars", "fillOpacity": 60, "lineWidth": 1, "showPoints": "never", "spanNulls": false, "stacking": { "mode": "normal" } },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
+      "id": 4,
+      "options": { "legend": { "displayMode": "table", "placement": "right", "calcs": ["sum"] }, "tooltip": { "mode": "multi" } },
+      "title": "Errors by code per hour",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "cloudwatch", "uid": "" },
+          "dimensions": { "ErrorCode": "*" },
+          "label": "${PROP('Dim.ErrorCode')}",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "GraphQLErrors",
+          "metricQueryType": 0,
+          "namespace": "fcp-tp-external-api",
+          "period": "3600",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "statistic": "Sum"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "grafana-opensearch-datasource", "uid": "f2b470f0-a723-4477-a07f-0f9dfe683bd8" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
+      "id": 5,
+      "options": { "showHeader": true, "sortBy": [{ "desc": true, "displayName": "@timestamp" }] },
+      "title": "Recent failed GraphQL requests",
+      "type": "table",
+      "targets": [
+        {
+          "alias": "",
+          "bucketAggs": [{ "field": "@timestamp", "id": "2", "settings": { "interval": "auto" }, "type": "date_histogram" }],
+          "datasource": { "type": "grafana-opensearch-datasource", "uid": "f2b470f0-a723-4477-a07f-0f9dfe683bd8" },
+          "format": "table",
+          "luceneQueryType": "Logs",
+          "metrics": [{ "id": "1", "type": "logs" }],
+          "query": "service.name:\"fcp-tp-external-api\" AND event.category:\"graphql\" AND event.outcome:\"failure\"",
+          "queryType": "lucene",
+          "refId": "A",
+          "timeField": "@timestamp"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "includeByName": { "@timestamp": true, "event.action": true, "event.reason": true, "tenant.id": true, "trace.id": true }
+          }
+        }
+      ]
+    },
+    {
+      "gridPos": { "h": 2, "w": 24, "x": 0, "y": 18 },
+      "id": 101,
+      "options": {
+        "content": "# Data access layer\nEvery request reads or writes through fcp-dal-api, using an Entra token this service fetches and caches.",
+        "mode": "markdown"
+      },
+      "title": "",
+      "type": "text"
+    },
+    {
+      "datasource": { "type": "cloudwatch", "uid": "" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 1, "showPoints": "never", "spanNulls": false, "stacking": { "mode": "none" } },
+          "mappings": [],
+          "unit": "ms",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 5000 }] }
+        }
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 20 },
+      "id": 6,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "title": "DAL response time",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "cloudwatch", "uid": "" },
+          "dimensions": {},
+          "label": "Average",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "DalRequestDuration",
+          "metricQueryType": 0,
+          "namespace": "fcp-tp-external-api",
+          "period": "300",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "statistic": "Average"
+        },
+        {
+          "datasource": { "type": "cloudwatch", "uid": "" },
+          "dimensions": {},
+          "label": "p95",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "DalRequestDuration",
+          "metricQueryType": 0,
+          "namespace": "fcp-tp-external-api",
+          "period": "300",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "default",
+          "statistic": "p95"
+        },
+        {
+          "datasource": { "type": "cloudwatch", "uid": "" },
+          "dimensions": {},
+          "label": "Maximum",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "DalRequestDuration",
+          "metricQueryType": 0,
+          "namespace": "fcp-tp-external-api",
+          "period": "300",
+          "queryMode": "Metrics",
+          "refId": "C",
+          "region": "default",
+          "statistic": "Maximum"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "cloudwatch", "uid": "" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 1, "showPoints": "never", "spanNulls": false, "stacking": { "mode": "none" } },
+          "mappings": [],
+          "unit": "ms",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        }
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 20 },
+      "id": 7,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "title": "DAL p95 response time by operation",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "cloudwatch", "uid": "" },
+          "dimensions": { "DalOperation": "*" },
+          "label": "${PROP('Dim.DalOperation')}",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "DalOperationDuration",
+          "metricQueryType": 0,
+          "namespace": "fcp-tp-external-api",
+          "period": "300",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "statistic": "p95"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "cloudwatch", "uid": "" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "bars", "fillOpacity": 60, "lineWidth": 1, "showPoints": "never", "spanNulls": false, "stacking": { "mode": "none" } },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Failures" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Timeouts" }, "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 20 },
+      "id": 8,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "title": "DAL failures per 5 minutes",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "cloudwatch", "uid": "" },
+          "dimensions": {},
+          "label": "Failures",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "DalFailures",
+          "metricQueryType": 0,
+          "namespace": "fcp-tp-external-api",
+          "period": "300",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": { "type": "cloudwatch", "uid": "" },
+          "dimensions": {},
+          "label": "Timeouts",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "DalTimeouts",
+          "metricQueryType": 0,
+          "namespace": "fcp-tp-external-api",
+          "period": "300",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "default",
+          "statistic": "Sum"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "cloudwatch", "uid": "" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "bars", "fillOpacity": 60, "lineWidth": 1, "showPoints": "never", "spanNulls": false, "stacking": { "mode": "none" } },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Failures after retrying" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 28 },
+      "id": 9,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "title": "Entra token requests per hour",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "cloudwatch", "uid": "" },
+          "dimensions": {},
+          "label": "Requests",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "DalTokenRequests",
+          "metricQueryType": 0,
+          "namespace": "fcp-tp-external-api",
+          "period": "3600",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": { "type": "cloudwatch", "uid": "" },
+          "dimensions": {},
+          "label": "Failures after retrying",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "DalTokenFailures",
+          "metricQueryType": 0,
+          "namespace": "fcp-tp-external-api",
+          "period": "3600",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "default",
+          "statistic": "Sum"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "grafana-opensearch-datasource", "uid": "f2b470f0-a723-4477-a07f-0f9dfe683bd8" },
+      "gridPos": { "h": 8, "w": 16, "x": 8, "y": 28 },
+      "id": 10,
+      "options": { "showHeader": true, "sortBy": [{ "desc": true, "displayName": "@timestamp" }] },
+      "title": "Recent DAL and Entra failures",
+      "type": "table",
+      "targets": [
+        {
+          "alias": "",
+          "bucketAggs": [{ "field": "@timestamp", "id": "2", "settings": { "interval": "auto" }, "type": "date_histogram" }],
+          "datasource": { "type": "grafana-opensearch-datasource", "uid": "f2b470f0-a723-4477-a07f-0f9dfe683bd8" },
+          "format": "table",
+          "luceneQueryType": "Logs",
+          "metrics": [{ "id": "1", "type": "logs" }],
+          "query": "service.name:\"fcp-tp-external-api\" AND event.category:\"dal\" AND event.outcome:\"failure\"",
+          "queryType": "lucene",
+          "refId": "A",
+          "timeField": "@timestamp"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "includeByName": { "@timestamp": true, "message": true, "event.action": true, "error.code": true, "error.message": true, "trace.id": true }
+          }
+        }
+      ]
+    },
+    {
+      "gridPos": { "h": 2, "w": 24, "x": 0, "y": 36 },
+      "id": 102,
+      "options": {
+        "content": "# Access, audit and update echo",
+        "mode": "markdown"
+      },
+      "title": "",
+      "type": "text"
+    },
+    {
+      "datasource": { "type": "cloudwatch", "uid": "" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "orange", "mode": "fixed" },
+          "custom": { "drawStyle": "bars", "fillOpacity": 60, "lineWidth": 1, "showPoints": "never", "spanNulls": false, "stacking": { "mode": "none" } },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        }
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 38 },
+      "id": 11,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "title": "CRN restriction refusals per hour",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "cloudwatch", "uid": "" },
+          "dimensions": {},
+          "label": "Refusals",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "CrnRestrictionDenials",
+          "metricQueryType": 0,
+          "namespace": "fcp-tp-external-api",
+          "period": "3600",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "statistic": "Sum"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "cloudwatch", "uid": "" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "bars", "fillOpacity": 60, "lineWidth": 1, "showPoints": "never", "spanNulls": false, "stacking": { "mode": "none" } },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Lost" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Published" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 38 },
+      "id": 12,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "title": "Audit events per hour",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "cloudwatch", "uid": "" },
+          "dimensions": {},
+          "label": "Published",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "AuditEventsPublished",
+          "metricQueryType": 0,
+          "namespace": "fcp-tp-external-api",
+          "period": "3600",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": { "type": "cloudwatch", "uid": "" },
+          "dimensions": {},
+          "label": "Lost",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "AuditPublishFailures",
+          "metricQueryType": 0,
+          "namespace": "fcp-tp-external-api",
+          "period": "3600",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "default",
+          "statistic": "Sum"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "cloudwatch", "uid": "" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "drawStyle": "bars", "fillOpacity": 60, "lineWidth": 1, "showPoints": "never", "spanNulls": false, "stacking": { "mode": "none" } },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Cache failures" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 38 },
+      "id": 13,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "title": "Update echo per hour",
+      "type": "timeseries",
+      "targets": [
+        {
+          "datasource": { "type": "cloudwatch", "uid": "" },
+          "dimensions": {},
+          "label": "Recent updates echoed",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "UpdateEchoApplied",
+          "metricQueryType": 0,
+          "namespace": "fcp-tp-external-api",
+          "period": "3600",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": { "type": "cloudwatch", "uid": "" },
+          "dimensions": {},
+          "label": "Cache failures",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "UpdateEchoFailures",
+          "metricQueryType": 0,
+          "namespace": "fcp-tp-external-api",
+          "period": "3600",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "default",
+          "statistic": "Sum"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "grafana-opensearch-datasource", "uid": "f2b470f0-a723-4477-a07f-0f9dfe683bd8" },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 46 },
+      "id": 14,
+      "options": { "showHeader": true, "sortBy": [{ "desc": true, "displayName": "Count" }] },
+      "title": "GraphQL requests by third party client ID",
+      "type": "table",
+      "targets": [
+        {
+          "alias": "",
+          "bucketAggs": [{ "field": "tenant.id", "id": "2", "settings": { "min_doc_count": "1", "order": "desc", "orderBy": "_count", "size": "20" }, "type": "terms" }],
+          "datasource": { "type": "grafana-opensearch-datasource", "uid": "f2b470f0-a723-4477-a07f-0f9dfe683bd8" },
+          "format": "table",
+          "luceneQueryType": "Metric",
+          "metrics": [{ "id": "1", "type": "count" }],
+          "query": "service.name:\"fcp-tp-external-api\" AND event.category:\"graphql\"",
+          "queryType": "lucene",
+          "refId": "A",
+          "timeField": "@timestamp"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "grafana-opensearch-datasource", "uid": "f2b470f0-a723-4477-a07f-0f9dfe683bd8" },
+      "gridPos": { "h": 8, "w": 16, "x": 8, "y": 46 },
+      "id": 15,
+      "options": { "showHeader": true, "sortBy": [{ "desc": true, "displayName": "@timestamp" }] },
+      "title": "Recent CRN restriction refusals and lost audit events",
+      "type": "table",
+      "targets": [
+        {
+          "alias": "",
+          "bucketAggs": [{ "field": "@timestamp", "id": "2", "settings": { "interval": "auto" }, "type": "date_histogram" }],
+          "datasource": { "type": "grafana-opensearch-datasource", "uid": "f2b470f0-a723-4477-a07f-0f9dfe683bd8" },
+          "format": "table",
+          "luceneQueryType": "Logs",
+          "metrics": [{ "id": "1", "type": "logs" }],
+          "query": "service.name:\"fcp-tp-external-api\" AND event.action:(\"crn-restriction\" OR \"audit-publish\")",
+          "queryType": "lucene",
+          "refId": "A",
+          "timeField": "@timestamp"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "includeByName": { "@timestamp": true, "message": true, "event.reason": true, "error.message": true, "tenant.id": true, "trace.id": true }
+          }
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "grafana-opensearch-datasource", "uid": "f2b470f0-a723-4477-a07f-0f9dfe683bd8" },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 54 },
+      "id": 16,
+      "options": { "showHeader": true, "sortBy": [{ "desc": true, "displayName": "@timestamp" }] },
+      "title": "Recent error log lines",
+      "type": "table",
+      "targets": [
+        {
+          "alias": "",
+          "bucketAggs": [{ "field": "@timestamp", "id": "2", "settings": { "interval": "auto" }, "type": "date_histogram" }],
+          "datasource": { "type": "grafana-opensearch-datasource", "uid": "f2b470f0-a723-4477-a07f-0f9dfe683bd8" },
+          "format": "table",
+          "luceneQueryType": "Logs",
+          "metrics": [{ "id": "1", "type": "logs" }],
+          "query": "service.name:\"fcp-tp-external-api\" AND log.level:\"error\"",
+          "queryType": "lucene",
+          "refId": "A",
+          "timeField": "@timestamp"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "includeByName": { "@timestamp": true, "message": true, "event.action": true, "error.type": true, "error.code": true, "error.message": true, "trace.id": true }
+          }
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": [
+    "fcp-tp",
+    "custom"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "title": "fcp-tp-external-api (custom)",
+  "version": 1
+}

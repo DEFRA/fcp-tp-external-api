@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest'
-import { getTokenClaims, getTokenCrn, getUserToken } from '../../../src/auth/user-token.js'
+import { getCallerClientId, getTokenClaims, getTokenCrn, getUserToken } from '../../../src/auth/user-token.js'
 
 function jwt (payload) {
   const encode = (value) => Buffer.from(JSON.stringify(value)).toString('base64url')
@@ -72,5 +72,22 @@ describe('getTokenCrn', () => {
     ['a payload that is JSON null', `header.${Buffer.from('null').toString('base64url')}.signature`]
   ])('returns null for %s', (_name, token) => {
     expect(getTokenCrn(token)).toBeNull()
+  })
+})
+
+describe('getCallerClientId', () => {
+  const clientId = '0A1B2C3D-4E5F-4A6B-8C7D-9E0F1A2B3C4D'
+
+  test('returns the azp claim when it is a GUID', () => {
+    expect(getCallerClientId(`Bearer ${jwt({ azp: clientId })}`)).toBe(clientId)
+  })
+
+  test.each([
+    ['there is no token', undefined],
+    ['there is no azp claim', jwt({ contactId: '1234567890' })],
+    ['azp is not a GUID', jwt({ azp: 'someone@example.com' })],
+    ['azp has a GUID inside other text', jwt({ azp: `x${clientId}` })]
+  ])('returns undefined when %s', (_name, token) => {
+    expect(getCallerClientId(token)).toBeUndefined()
   })
 })

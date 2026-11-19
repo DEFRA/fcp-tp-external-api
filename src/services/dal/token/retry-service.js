@@ -9,6 +9,16 @@ function isUnauthorised (err) {
   return err?.output?.statusCode === constants.HTTP_STATUS_UNAUTHORIZED
 }
 
+// Wreck errors are Booms: output.statusCode is Entra's status, or a bad gateway with the socket error in data
+export function tokenErrorFields (err) {
+  return {
+    type: err?.name,
+    code: String(err?.data?.code ?? err?.output?.statusCode ?? err?.code ?? err?.name),
+    message: err?.message,
+    stack_trace: err?.stack
+  }
+}
+
 export async function retry (fn, retriesLeft = 3, interval = 1000, exponential = true) {
   try {
     return await fn()
@@ -22,7 +32,10 @@ export async function retry (fn, retriesLeft = 3, interval = 1000, exponential =
       throw err
     }
 
-    logger.warn(err, `Retrying DAL token request (${retriesLeft} retries left)`)
+    logger.warn(
+      { event: { category: 'dal', action: 'dal-token', outcome: 'failure' }, error: tokenErrorFields(err) },
+      `Retrying DAL token request (${retriesLeft} retries left)`
+    )
     await new Promise((resolve) => setTimeout(resolve, interval))
 
     return retry(fn, retriesLeft - 1, exponential ? interval * 2 : interval, exponential)
