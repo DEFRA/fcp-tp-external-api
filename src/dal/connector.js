@@ -1,10 +1,16 @@
+import { constants } from 'node:http2'
 import { GraphQLError } from 'graphql'
 import { withTraceId } from '@defra/hapi-tracing'
 import { config } from '../config.js'
 import { createLogger } from '../common/helpers/logging/logger.js'
+import { safeErrorMessage } from '../common/helpers/logging/safe-error-message.js'
+import { serverMetrics } from '../common/helpers/metrics.js'
 import { getToken } from '../services/dal/token/get-token-service.js'
 
 const logger = createLogger()
+
+const NS_PER_MS = 1e6
+const UNAVAILABLE_MESSAGE = 'The data access layer could not be reached'
 
 function buildRequest (bearerToken, forwardedUserToken, query, variables) {
   const headers = withTraceId(config.get('tracing.header'), {
@@ -38,9 +44,50 @@ async function readErrors (response) {
   }
 }
 
-export async function queryDal (query, variables, { forwardedUserToken } = {}) {
-  const bearerToken = await getToken()
+function operationName (query) {
+  return /^\s*(?:query|mutation)\s+(\w+)/.exec(query)?.[1] ?? 'unknown'
+}
 
+function elapsedNs (startedAt) {
+  return Number(process.hrtime.bigint() - startedAt)
+}
+
+function networkErrorCode (err) {
+  return err.name === 'TimeoutError' ? 'TIMEOUT' : (err.cause?.code ?? err.name)
+}
+
+function dalErrorFields (dalErrorBody, fallbackCode) {
+  const code = String(dalErrorBody?.extensions?.code ?? fallbackCode)
+  return { code, message: safeErrorMessage(code, dalErrorBody?.message) }
+}
+
+function logFailure (level, operation, durationNs, { error, reason }, message) {
+  logger[level](
+    { event: { category: 'dal', action: operation, outcome: 'failure', duration: durationNs, reason }, error },
+    message
+  )
+  serverMetrics.counter('DalFailures')
+}
+
+function recordDuration (operation, durationNs) {
+  const durationMs = durationNs / NS_PER_MS
+  serverMetrics.millis('DalRequestDuration', durationMs)
+  serverMetrics.millis('DalOperationDuration', durationMs, { DalOperation: operation })
+}
+
+export async function queryDal (query, variables, { forwardedUserToken } = {}) {
+  const operation = operationName(query)
+
+  let bearerToken
+
+  try {
+    bearerToken = await getToken()
+  } catch {
+    // getToken has already logged and counted the failure
+    throw dalError(UNAVAILABLE_MESSAGE, 'DAL_UNAVAILABLE')
+  }
+
+  const startedAt = process.hrtime.bigint()
   let response
 
   try {
@@ -49,17 +96,32 @@ export async function queryDal (query, variables, { forwardedUserToken } = {}) {
       buildRequest(bearerToken, forwardedUserToken, query, variables)
     )
   } catch (err) {
-    logger.error(err, 'DAL request failed')
-    throw dalError('The data access layer could not be reached', 'DAL_UNAVAILABLE')
+    const code = networkErrorCode(err)
+    logFailure(
+      'error',
+      operation,
+      elapsedNs(startedAt),
+      { error: { type: err.name, code, message: err.message, stack_trace: err.stack } },
+      'DAL request failed'
+    )
+    if (code === 'TIMEOUT') {
+      serverMetrics.counter('DalTimeouts')
+    }
+    throw dalError(UNAVAILABLE_MESSAGE, 'DAL_UNAVAILABLE')
   }
+
+  recordDuration(operation, elapsedNs(startedAt))
 
   if (!response.ok) {
     // The DAL explains non-200 responses in the body, so keep that detail rather than discarding it.
     const errors = await readErrors(response)
-    logger.error(
+    logFailure(
+      response.status >= constants.HTTP_STATUS_INTERNAL_SERVER_ERROR ? 'error' : 'warn',
+      operation,
+      elapsedNs(startedAt),
       {
-        http: { response: { status_code: response.status } },
-        error: { code: errors[0]?.extensions?.code, message: errors[0]?.message }
+        reason: `DAL responded with HTTP ${response.status}`,
+        error: dalErrorFields(errors[0], `HTTP_${response.status}`)
       },
       'DAL responded with a non-success status'
     )
@@ -79,8 +141,11 @@ export async function queryDal (query, variables, { forwardedUserToken } = {}) {
   const body = await response.json()
 
   if (body.errors?.length) {
-    logger.error(
-      { error: { code: body.errors[0].extensions?.code, message: body.errors[0].message } },
+    logFailure(
+      'error',
+      operation,
+      elapsedNs(startedAt),
+      { error: dalErrorFields(body.errors[0], 'DAL_ERROR') },
       `DAL responded with ${body.errors.length} error(s)`
     )
     throw dalError(body.errors[0].message, body.errors[0].extensions?.code ?? 'DAL_ERROR')

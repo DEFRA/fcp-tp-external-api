@@ -1,4 +1,5 @@
 import { createLogger } from '../common/helpers/logging/logger.js'
+import { serverMetrics } from '../common/helpers/metrics.js'
 import { config } from '../config.js'
 import * as echoCache from '../common/helpers/caching/update-echo-cache.js'
 import { mergeFragment } from './merge.js'
@@ -25,6 +26,7 @@ export async function rememberUpdate (kind, id, fragment) {
     await echoCache.set(cacheId(kind, id), merged, config.get('updateEcho.ttlMs'))
   } catch (error) {
     logger.warn(error, 'Failed to remember update for the update echo cache')
+    serverMetrics.counter('UpdateEchoFailures')
   }
 }
 
@@ -35,9 +37,15 @@ export async function applyRecentUpdate (kind, id, entity) {
 
   try {
     const fragment = await echoCache.get(cacheId(kind, id))
-    return fragment ? mergeFragment(entity, fragment) : entity
+    if (!fragment) {
+      return entity
+    }
+    const merged = mergeFragment(entity, fragment)
+    serverMetrics.counter('UpdateEchoApplied')
+    return merged
   } catch (error) {
     logger.warn(error, 'Failed to apply the update echo cache')
+    serverMetrics.counter('UpdateEchoFailures')
     return entity
   }
 }

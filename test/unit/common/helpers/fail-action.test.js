@@ -9,10 +9,10 @@ vi.mock('../../../../src/common/helpers/logging/logger.js', () => ({
 const { failAction } = await import('../../../../src/common/helpers/fail-action.js')
 
 describe('failAction', () => {
-  test('logs and rethrows the validation error', () => {
-    const error = new Error('"sbi" is required')
+  test('logs the error type without its message and rethrows it', () => {
+    const error = new Error('"sbi" with value "1000000001" fails to match the required pattern')
 
-    expect(() => failAction({}, {}, error)).toThrow('"sbi" is required')
-    expect(loggerWarn).toHaveBeenCalledWith(error, error.message)
+    expect(() => failAction({}, {}, error)).toThrow(error)
+    expect(loggerWarn).toHaveBeenCalledWith({ error: { type: 'Error' } }, 'Request failed validation')
   })
 })

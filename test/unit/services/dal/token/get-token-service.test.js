@@ -1,9 +1,15 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest'
+import { constants } from 'node:http2'
 
 const wreckPost = vi.fn()
 const cacheGet = vi.fn()
 const cacheSet = vi.fn()
 const cacheDrop = vi.fn()
+const mockLogger = vi.hoisted(() => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() }))
+
+vi.mock('../../../../../src/common/helpers/logging/logger.js', () => ({
+  createLogger: () => mockLogger
+}))
 
 vi.mock('@hapi/wreck', () => ({
   default: { post: (...args) => wreckPost(...args) }
@@ -16,6 +22,7 @@ vi.mock('../../../../../src/common/helpers/caching/token-cache.js', () => ({
 }))
 
 const { getToken } = await import('../../../../../src/services/dal/token/get-token-service.js')
+const { serverMetrics } = await import('../../../../../src/common/helpers/metrics.js')
 const { TOKEN_EXPIRY_BUFFER_MS, DAL_TOKEN_CACHE_KEY } = await import('../../../../../src/services/dal/token/constants.js')
 
 const tokenResponse = {
@@ -80,6 +87,34 @@ describe('getToken', () => {
 
     expect(await getToken()).toBe('Bearer an-access-token')
     expect(wreckPost).toHaveBeenCalledTimes(2)
+  })
+
+  test('counts each request made to Entra', async () => {
+    await getToken()
+
+    expect(serverMetrics.counter).toHaveBeenCalledWith('DalTokenRequests')
+  })
+
+  test('logs and counts a failure once the retries are exhausted, then rethrows it', async () => {
+    vi.useFakeTimers()
+    const err = new Error('Response Error: 401 Unauthorized')
+    err.output = { statusCode: constants.HTTP_STATUS_UNAUTHORIZED }
+    wreckPost.mockRejectedValue(err)
+
+    const result = expect(getToken()).rejects.toBe(err)
+    await vi.runAllTimersAsync()
+    await result
+    vi.useRealTimers()
+
+    expect(mockLogger.error).toHaveBeenCalledTimes(1)
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      {
+        event: { category: 'dal', action: 'dal-token', outcome: 'failure' },
+        error: expect.objectContaining({ type: 'Error', code: String(constants.HTTP_STATUS_UNAUTHORIZED), message: 'Response Error: 401 Unauthorized' })
+      },
+      'Could not get a DAL token from Entra after retrying'
+    )
+    expect(serverMetrics.counter).toHaveBeenCalledWith('DalTokenFailures')
   })
 
   test('bypasses Entra entirely when DAL_DISABLE_AUTH is enabled', async () => {

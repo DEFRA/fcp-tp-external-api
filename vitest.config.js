@@ -31,6 +31,7 @@ export default defineConfig({
         test: {
           name: 'unit',
           include: ['test/unit/**/*.test.js'],
+          setupFiles: ['test/setup/metrics.js'],
           clearMocks: true,
           environment: 'node',
           env: sharedEnv
@@ -40,6 +41,7 @@ export default defineConfig({
         test: {
           name: 'integration',
           include: ['test/integration/**/*.test.js'],
+          setupFiles: ['test/setup/metrics.js'],
           clearMocks: true,
           environment: 'node',
           env: sharedEnv

@@ -11,6 +11,7 @@ vi.mock('../../../src/common/helpers/caching/update-echo-cache.js', () => ({
 }))
 
 const { rememberUpdate, applyRecentUpdate } = await import('../../../src/update-echo/index.js')
+const { serverMetrics } = await import('../../../src/common/helpers/metrics.js')
 
 describe('rememberUpdate', () => {
   beforeEach(() => {
@@ -41,6 +42,7 @@ describe('rememberUpdate', () => {
     cacheSet.mockRejectedValue(new Error('cache is unavailable'))
 
     await expect(rememberUpdate('Business', '123456789', { info: { vat: '987654321' } })).resolves.toBeUndefined()
+    expect(serverMetrics.counter).toHaveBeenCalledWith('UpdateEchoFailures')
   })
 
   test('does nothing when the feature flag is disabled', async () => {
@@ -80,6 +82,7 @@ describe('applyRecentUpdate', () => {
     const entity = { sbi: '123456789', info: { vat: 'FAKE1' } }
 
     expect(await applyRecentUpdate('Business', '123456789', entity)).toBe(entity)
+    expect(serverMetrics.counter).not.toHaveBeenCalled()
   })
 
   test('returns null entities unchanged without touching the cache', async () => {
@@ -96,6 +99,7 @@ describe('applyRecentUpdate', () => {
       sbi: '123456789',
       info: { vat: '987654321', email: { address: 'fake@example.com' } }
     })
+    expect(serverMetrics.counter).toHaveBeenCalledWith('UpdateEchoApplied')
   })
 
   test('swallows cache failures and returns the entity unchanged', async () => {
@@ -103,6 +107,8 @@ describe('applyRecentUpdate', () => {
     const entity = { sbi: '123456789', info: { vat: 'FAKE1' } }
 
     expect(await applyRecentUpdate('Business', '123456789', entity)).toBe(entity)
+    expect(serverMetrics.counter).toHaveBeenCalledWith('UpdateEchoFailures')
+    expect(serverMetrics.counter).not.toHaveBeenCalledWith('UpdateEchoApplied')
   })
 
   test('does nothing when the feature flag is disabled', async () => {

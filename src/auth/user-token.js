@@ -32,3 +32,11 @@ export function getTokenClaims (token) {
 export function getTokenCrn (token) {
   return getTokenClaims(token).crn ?? null
 }
+
+const CLIENT_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+// The third party's Defra ID client ID (azp). Unverified, so anything other than a GUID is dropped.
+export function getCallerClientId (token) {
+  const { azp } = getTokenClaims(token)
+  return CLIENT_ID_PATTERN.test(azp ?? '') ? azp : undefined
+}

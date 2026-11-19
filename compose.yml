@@ -127,7 +127,6 @@ services:
     environment:
       PORT: 3001
       NODE_ENV: development
-      AWS_EMF_ENVIRONMENT: Local
       DAL_ENDPOINT: http://fcp-dal-api:3000/graphql
       DAL_GATEWAY_TYPE: external
       DAL_DISABLE_AUTH: 'true'

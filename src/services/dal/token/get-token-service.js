@@ -1,8 +1,9 @@
 import Wreck from '@hapi/wreck'
 import { config } from '../../../config.js'
 import { createLogger } from '../../../common/helpers/logging/logger.js'
+import { serverMetrics } from '../../../common/helpers/metrics.js'
 import { get, set } from '../../../common/helpers/caching/token-cache.js'
-import { retry } from './retry-service.js'
+import { retry, tokenErrorFields } from './retry-service.js'
 import { DAL_TOKEN_CACHE_KEY, TOKEN_EXPIRY_BUFFER_MS } from './constants.js'
 
 const logger = createLogger()
@@ -44,6 +45,7 @@ async function getCachedOrNewToken () {
   }
 
   logger.info('DAL token cache miss, requesting a new token from Entra')
+  serverMetrics.counter('DalTokenRequests')
 
   const { token, expiresInMs } = await requestNewToken()
   const ttl = expiresInMs - TOKEN_EXPIRY_BUFFER_MS
@@ -55,6 +57,15 @@ async function getCachedOrNewToken () {
   return token
 }
 
-export function getToken () {
-  return retry(getCachedOrNewToken)
+export async function getToken () {
+  try {
+    return await retry(getCachedOrNewToken)
+  } catch (err) {
+    logger.error(
+      { event: { category: 'dal', action: 'dal-token', outcome: 'failure' }, error: tokenErrorFields(err) },
+      'Could not get a DAL token from Entra after retrying'
+    )
+    serverMetrics.counter('DalTokenFailures')
+    throw err
+  }
 }

@@ -19,6 +19,7 @@ in the same way `fcp-sfd-frontend` is.
 - [Echoing recent updates](#echoing-recent-updates)
 - [Restricting access by CRN](#restricting-access-by-crn)
 - [Auditing](#auditing)
+- [Monitoring](#monitoring)
 - [Entra setup](#entra-setup)
 - [Local development](#local-development)
 - [Configuration](#configuration)
@@ -181,7 +182,7 @@ Failures upstream surface as GraphQL errors with a code in `extensions.code`:
 | Code | Meaning |
 | --- | --- |
 | `BAD_USER_INPUT` | The SBI or CRN was not a valid identifier, or an address field was blank or too long |
-| `DAL_UNAVAILABLE` | The DAL could not be reached, or the request timed out |
+| `DAL_UNAVAILABLE` | The DAL could not be reached, the request timed out, or this service could not get its Entra token |
 | `DAL_REQUEST_REJECTED` | The DAL returned a non-success status. `extensions.status` has it |
 | *(passed through)* | The DAL returned a GraphQL error; its own code is preserved |
 
@@ -556,6 +557,105 @@ To feed a local [fcp-audit](https://github.com/DEFRA/fcp-audit) instead, point `
 at its Floci (`http://localhost:4567`) and `AUDIT_SNS_TOPIC_ARN` at its
 `fcp_audit_publisher_stub` topic.
 
+## Monitoring
+
+On CDP, logs go to OpenSearch (`cdp-logs`) and custom metrics to CloudWatch, under the namespace
+`fcp-tp-external-api`. The custom Grafana dashboard is in
+[`grafana/fcp-tp-external-api-custom.json`](grafana/fcp-tp-external-api-custom.json).
+
+GraphQL errors are returned with HTTP 200, so the platform's HTTP status dashboards and alerts do
+not see a DAL outage. The metrics and log lines below exist to fill that gap.
+
+### What is logged
+
+Every GraphQL request gets one log line, in addition to the platform's request log:
+
+| Field | Value |
+| --- | --- |
+| `event.category` | `graphql` |
+| `event.type` | `query` or `mutation` |
+| `event.action` | The root fields, for example `business` or `business,customer`. `unknown` if the request never passed validation |
+| `event.outcome` | `success` or `failure` |
+| `event.reason` / `error.code` | The distinct error codes, and the first of them |
+| `event.duration` | Nanoseconds |
+| `tenant.id` | The third party's Defra ID client ID (the token's `azp` claim), when it is a GUID |
+| `trace.id` | The CDP trace ID |
+
+Successful requests log at `info`, client errors at `warn` and server errors (`DAL_UNAVAILABLE`,
+`DAL_ERROR`, unexpected errors, or a DAL rejection with a 5xx status) at `error`.
+
+DAL failures (`event.category: dal`, `event.action` is the DAL operation, `warn` for a 4xx and
+`error` otherwise), Entra token failures
+(`event.action: dal-token`), CRN restriction refusals (`event.action: crn-restriction`), lost
+audit events (`event.action: audit-publish`) and update echo cache failures are logged too.
+
+Logs never contain variables, arguments, query text, response data, the caller's operation name or
+the Defra ID token. The message of an input error (`BAD_USER_INPUT`, `GRAPHQL_VALIDATION_FAILED`,
+`GRAPHQL_PARSE_FAILED`, `BAD_REQUEST`) is never logged, as GraphQL repeats the rejected value in
+it. Unexpected errors are logged with their type and stack trace, minus the message line. Only
+fields on CDP's allowed list are used, nested rather than flattened. Error codes stay out of the
+`message`, because CDP obfuscates message text that follows words such as `USER` or `name`.
+
+### Tracing a request
+
+Every response carries an `x-cdp-request-id` header. A third party reporting a problem can quote
+it, and searching OpenSearch for `trace.id:"<id>"` finds this service's logs and the DAL's for
+that request.
+
+### Metrics
+
+| Metric | Dimensions | Recorded |
+| --- | --- | --- |
+| `GraphQLRequests` | | Every GraphQL request |
+| `GraphQLClientErrors` / `GraphQLServerErrors` | | A request that failed, by the kind of error |
+| `UnexpectedErrors` | | An error with no code, which is a bug |
+| `GraphQLErrors` | `ErrorCode` | Every error |
+| `OperationRequests` | `Operation`, `Outcome` | Every root field |
+| `DalRequestDuration` | | DAL response time in milliseconds |
+| `DalOperationDuration` | `DalOperation` | The same, by DAL operation |
+| `DalFailures` / `DalTimeouts` | | A DAL call that failed / timed out |
+| `DalTokenRequests` / `DalTokenFailures` | | An Entra token request / a token that could not be had after retrying |
+| `CrnRestrictionDenials` | | A request refused by the CRN restriction |
+| `AuditEventsPublished` / `AuditPublishFailures` | | An audit event published / lost |
+| `UpdateEchoApplied` / `UpdateEchoFailures` | | A recent update echoed back / an echo cache failure |
+
+Metrics go through `src/common/helpers/metrics.js`, and are never awaited. Dimensions only ever
+hold schema names and error codes, never identifiers.
+
+Metrics only reach CloudWatch when running on ECS, which is where CDP runs the service and where
+the metrics library finds CloudWatch itself. Anywhere else (the published image run locally, for
+example by `fcp-land-app-stub`) the service sets `AWS_EMF_ENVIRONMENT=Local`, which writes each
+metric to stdout instead. That covers `npm run dev`, the test run and the compose stack too, so
+nothing needs setting by hand. An explicit `AWS_EMF_ENVIRONMENT` is always respected.
+
+### Alerts
+
+The platform default alerts cover task count, CPU, memory, average response time and HTTP status
+codes. These are added in the Playground folder, in the `fcp-tp-external-api-advanced-alerts`
+evaluation group, then promoted one at a time from the Portal:
+
+| Alert | Query | Condition |
+| --- | --- | --- |
+| DAL unavailable or failing | `GraphQLServerErrors` Sum | > 5 over 5 minutes, pending 5 minutes |
+| DAL timeouts | `DalTimeouts` Sum | ≥ 3 over 10 minutes |
+| DAL slow | `DalRequestDuration` p95 | > 5000 ms for 10 minutes |
+| Entra token failure | `DalTokenFailures` Sum | ≥ 1 over 5 minutes |
+| Unexpected errors | `UnexpectedErrors` Sum | ≥ 1 over 15 minutes |
+| Audit events lost | `AuditPublishFailures` Sum | ≥ 1 over 15 minutes |
+| CRN restriction refusals | `CrnRestrictionDenials` Sum | > 20 over 15 minutes |
+| Error log volume | OpenSearch, `service.name:"fcp-tp-external-api" AND log.level:"error"` | > 10 over 5 minutes |
+
+### Checking logs locally
+
+[`@defra/cdp-log-pipeline`](https://www.npmjs.com/package/@defra/cdp-log-pipeline) shows what
+OpenSearch would keep of each log line:
+
+```bash
+LOG_FORMAT=ecs npm run dev | npx @defra/cdp-log-pipeline --service-name fcp-tp-external-api --explain
+```
+
+A field it drops will not be searchable on CDP, and a rejected line ends up in `cdp-broken-logs`.
+
 ## Entra setup
 
 The service authenticates to the DAL with the OAuth 2.0 client credentials grant. You need an app
@@ -654,7 +754,7 @@ run misconfigured. See `src/config.js`, and `.env.example` for a working local s
 | --- | --- | --- | --- |
 | `PORT` | | `3001` | Port to bind |
 | `HOST` | | `0.0.0.0` | Address to bind |
-| `NODE_ENV` | | | `production` switches on ECS logging, secure context and metrics |
+| `NODE_ENV` | | | `production` switches on ECS logging and secure context |
 | `ENVIRONMENT` | | `local` | The CDP environment |
 | `SERVICE_VERSION` | | | Injected by CDP |
 | `DAL_ENDPOINT` | yes | | GraphQL endpoint of the DAL |
@@ -676,7 +776,7 @@ run misconfigured. See `src/config.js`, and `.env.example` for a working local s
 | `LOG_FORMAT` | | `ecs` in production | `ecs` or `pino-pretty` |
 | `HTTP_PROXY` | | | Set by CDP. Routes outbound traffic through the platform proxy |
 | `ENABLE_SECURE_CONTEXT` | | on in production | Load CDP's CA certificates |
-| `ENABLE_METRICS` | | on in production | Report CloudWatch metrics |
+| `AWS_EMF_ENVIRONMENT` | | `Local` when not running on ECS | `Local` writes metrics to stdout instead of CloudWatch. Never set it on CDP |
 | `TRACING_HEADER` | | `x-cdp-request-id` | Header carrying the CDP trace ID |
 | `AUDIT_ENABLED` | | `false` | Publish FCP Audit events |
 | `AUDIT_SNS_TOPIC_ARN` | yes, when auditing | | SNS topic to publish audit events to |

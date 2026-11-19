@@ -2,6 +2,7 @@ import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest'
 import Hapi from '@hapi/hapi'
 import { config } from '../../../src/config.js'
 import { crnRestriction } from '../../../src/plugins/crn-restriction.js'
+import { serverMetrics } from '../../../src/common/helpers/metrics.js'
 
 const mockLogger = vi.hoisted(() => ({ info: vi.fn(), warn: vi.fn() }))
 const mockPublish = vi.hoisted(() => vi.fn())
@@ -196,6 +197,27 @@ describe('crn restriction', () => {
       )
       expect(JSON.stringify(mockLogger.warn.mock.calls)).not.toContain(token)
       expect(JSON.stringify(mockLogger.warn.mock.calls)).not.toContain(OTHER_CRN.slice(-4))
+      expect(serverMetrics.counter).toHaveBeenCalledWith('CrnRestrictionDenials')
+    })
+
+    test('attributes a refusal to the third party when the token names a client ID', async () => {
+      const clientId = '0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d'
+
+      await post({ 'x-forwarded-authorization': jwt({ contactId: OTHER_CRN, azp: clientId }) })
+
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        {
+          event: { action: 'crn-restriction', outcome: 'failure', reason: 'not-allowed' },
+          tenant: { id: clientId }
+        },
+        'Request refused by CRN restriction'
+      )
+    })
+
+    test('does not count an allowed request', async () => {
+      await post({ 'x-forwarded-authorization': jwt({ contactId: ALLOWED_CRN }) })
+
+      expect(serverMetrics.counter).not.toHaveBeenCalled()
     })
 
     test.each([

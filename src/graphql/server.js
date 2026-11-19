@@ -6,6 +6,7 @@ import { makeExecutableSchema } from '@graphql-tools/schema'
 import { config } from '../config.js'
 import { resolvers } from './resolvers/index.js'
 import { auditPlugin } from '../audit/plugin.js'
+import { requestLoggingPlugin } from './request-logging-plugin.js'
 
 const typeDefs = mergeTypeDefs(
   loadFilesSync(join(import.meta.dirname, 'types'), { extensions: ['gql'] })
@@ -17,7 +18,7 @@ export const apolloServer = new ApolloServer({
   schema,
   introspection: config.get('graphql.isIntrospectionEnabled'),
   csrfPrevention: true,
-  plugins: [auditPlugin]
+  plugins: [auditPlugin, requestLoggingPlugin]
 })
 
 export async function start () {
